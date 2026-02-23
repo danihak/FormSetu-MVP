@@ -1,0 +1,59 @@
+# FormSetu Development Stack
+# Run: docker compose up
+# API available at: http://localhost:8000
+# API docs at: http://localhost:8000/docs
+
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://formsetu:formsetu@postgres:5432/formsetu
+      - REDIS_URL=redis://redis:6379/0
+      - BHASHINI_USER_ID=${BHASHINI_USER_ID}
+      - BHASHINI_API_KEY=${BHASHINI_API_KEY}
+      - BHASHINI_PIPELINE_ID=${BHASHINI_PIPELINE_ID:-64392f96daac500b55c543cd}
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./packages:/app/packages
+      - ./services:/app/services
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: formsetu
+      POSTGRES_PASSWORD: formsetu
+      POSTGRES_DB: formsetu
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U formsetu"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

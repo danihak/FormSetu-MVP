@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://formsetu.gov.in/schema/v1/govform.schema.json",
+  "title": "GovForm Schema",
+  "description": "Machine-readable specification for Indian government forms. Enables voice/chat-based form filling via FormSetu engine.",
+  "type": "object",
+  "required": ["form_id", "version", "metadata", "sections", "fields"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://formsetu.gov.in/schema/v1"
+    },
+    "form_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "description": "Unique identifier. Convention: scheme-name-version, e.g., pm-kisan-v3"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema version (semver major.minor)"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "department"],
+      "properties": {
+        "name": { "$ref": "#/definitions/i18n_string" },
+        "department": { "type": "string" },
+        "scheme_id": {
+          "type": "string",
+          "description": "MyScheme.gov.in scheme ID if applicable"
+        },
+        "last_updated": { "type": "string", "format": "date" },
+        "estimated_time_minutes": { "type": "integer", "minimum": 1 },
+        "documents_required": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to original form PDF/webpage"
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "order", "fields"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "$ref": "#/definitions/i18n_string" },
+          "order": { "type": "integer" },
+          "fields": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "References to field IDs in the fields object"
+          }
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/field" }
+    },
+    "conditionals": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/conditional" }
+    },
+    "submission": { "$ref": "#/definitions/submission" }
+  },
+  "definitions": {
+    "i18n_string": {
+      "type": "object",
+      "required": ["en"],
+      "properties": {
+        "en": { "type": "string" },
+        "hi": { "type": "string" },
+        "bn": { "type": "string" },
+        "ta": { "type": "string" },
+        "te": { "type": "string" },
+        "mr": { "type": "string" },
+        "gu": { "type": "string" },
+        "kn": { "type": "string" },
+        "ml": { "type": "string" },
+        "pa": { "type": "string" },
+        "or": { "type": "string" },
+        "as": { "type": "string" }
+      },
+      "additionalProperties": { "type": "string" },
+      "description": "Multilingual string. 'en' is required, others follow ISO-639-1 codes."
+    },
+    "field": {
+      "type": "object",
+      "required": ["type", "label", "required"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "text", "number", "date", "select", "multiselect", "boolean",
+            "aadhaar", "pan", "ifsc", "mobile", "email", "pincode",
+            "voter_id", "ration_card", "vehicle_registration",
+            "geo_state", "geo_district", "geo_subdistrict", "geo_village",
+            "address_line", "file_upload"
+          ]
+        },
+        "label": { "$ref": "#/definitions/i18n_string" },
+        "required": { "type": "boolean" },
+        "validation": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string", "description": "Regex pattern" },
+            "min_length": { "type": "integer" },
+            "max_length": { "type": "integer" },
+            "min_value": { "type": "number" },
+            "max_value": { "type": "number" },
+            "format": {
+              "type": "string",
+              "enum": ["aadhaar", "pan", "ifsc", "pincode", "mobile", "email", "date_dmy", "date_ymd"]
+            },
+            "checksum": { "type": "string", "enum": ["verhoeff", "luhn"] },
+            "source": {
+              "type": "string",
+              "description": "Lookup data source for validation, e.g., lgd_state_codes, rbi_ifsc_master"
+            }
+          }
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["value", "label"],
+            "properties": {
+              "value": { "type": "string" },
+              "label": { "$ref": "#/definitions/i18n_string" }
+            }
+          },
+          "description": "For select/multiselect fields"
+        },
+        "depends_on": {
+          "type": "object",
+          "properties": {
+            "field": { "type": "string" },
+            "filter_by": { "type": "string" }
+          },
+          "description": "Cascading dependency. e.g., district list filtered by selected state."
+        },
+        "voice": {
+          "type": "object",
+          "properties": {
+            "prompt": { "$ref": "#/definitions/i18n_string" },
+            "confirm": { "type": "boolean", "default": true },
+            "spell_mode": {
+              "type": "boolean",
+              "default": false,
+              "description": "Ask for digit-by-digit/character-by-character input"
+            },
+            "chunk_size": {
+              "type": "integer",
+              "description": "For spell_mode: collect in chunks of N. e.g., Aadhaar in chunks of 4."
+            },
+            "chunk_prompt": { "$ref": "#/definitions/i18n_string" },
+            "example": { "$ref": "#/definitions/i18n_string" },
+            "fallback_strategy": {
+              "type": "string",
+              "description": "What to do if voice input fails. e.g., bank_branch_lookup for IFSC."
+            }
+          }
+        },
+        "autofill": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "enum": ["aadhaar_ekyc", "digilocker", "session_history", "lgd_lookup"]
+            },
+            "field": { "type": "string" },
+            "consent_required": { "type": "boolean", "default": true }
+          }
+        },
+        "lookup": {
+          "type": "object",
+          "properties": {
+            "endpoint": { "type": "string" },
+            "input_fields": { "type": "array", "items": { "type": "string" } },
+            "output_field": { "type": "string" }
+          }
+        }
+      }
+    },
+    "conditional": {
+      "type": "object",
+      "required": ["id", "if", "then"],
+      "properties": {
+        "id": { "type": "string" },
+        "if": {
+          "type": "object",
+          "required": ["field", "operator", "value"],
+          "properties": {
+            "field": { "type": "string" },
+            "operator": { "type": "string", "enum": ["eq", "neq", "in", "not_in", "gt", "lt", "exists"] },
+            "value": {}
+          }
+        },
+        "then": {
+          "type": "object",
+          "properties": {
+            "show_fields": { "type": "array", "items": { "type": "string" } },
+            "hide_fields": { "type": "array", "items": { "type": "string" } },
+            "make_required": { "type": "array", "items": { "type": "string" } },
+            "make_optional": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "submission": {
+      "type": "object",
+      "properties": {
+        "target": { "type": "string", "enum": ["api_setu", "direct_api", "manual"] },
+        "endpoint": { "type": "string" },
+        "method": { "type": "string", "enum": ["POST", "PUT"] },
+        "auth": { "type": "string", "enum": ["aadhaar_esign", "otp", "none"] },
+        "documents": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "source": { "type": "string" },
+              "doc_type": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

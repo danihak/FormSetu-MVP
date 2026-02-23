@@ -1,0 +1,63 @@
+name: FormSetu CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-validators:
+    name: Test Validators
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest pytest-cov
+      - run: pytest packages/validator/tests/ -v --cov=packages/validator/src --cov-report=term-missing
+
+  test-engine:
+    name: Test Engine
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pytest
+      - run: pytest packages/engine/tests/ -v
+
+  validate-schemas:
+    name: Validate Example Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install jsonschema
+      - run: |
+          python -c "
+          import json, jsonschema, glob
+          with open('packages/schema-spec/govform.schema.json') as f:
+              meta = json.load(f)
+          for path in glob.glob('packages/schema-spec/examples/*.json'):
+              with open(path) as f:
+                  schema = json.load(f)
+              jsonschema.validate(schema, meta)
+              print(f'  PASS: {path}')
+          print('All schemas valid.')
+          "
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff
+      - run: ruff check packages/ services/

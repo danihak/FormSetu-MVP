@@ -1,0 +1,360 @@
+{
+  "$schema": "https://formsetu.gov.in/schema/v1",
+  "form_id": "pm-kisan-v3",
+  "version": "3.1",
+  "metadata": {
+    "name": {
+      "en": "PM-KISAN Samman Nidhi Beneficiary Registration",
+      "hi": "पीएम-किसान सम्मान निधि लाभार्थी पंजीकरण"
+    },
+    "department": "Ministry of Agriculture & Farmers Welfare",
+    "scheme_id": "myscheme:pm-kisan",
+    "last_updated": "2025-11-15",
+    "estimated_time_minutes": 8,
+    "documents_required": ["aadhaar", "bank_passbook", "land_record"],
+    "source_url": "https://pmkisan.gov.in/RegistrationForm.aspx"
+  },
+  "sections": [
+    {
+      "id": "personal",
+      "label": { "en": "Personal Details", "hi": "व्यक्तिगत विवरण" },
+      "order": 1,
+      "fields": ["full_name", "father_name", "dob", "gender", "category", "aadhaar_number", "mobile"]
+    },
+    {
+      "id": "bank",
+      "label": { "en": "Bank Account Details", "hi": "बैंक खाता विवरण" },
+      "order": 2,
+      "fields": ["account_number", "confirm_account_number", "ifsc_code", "bank_name"]
+    },
+    {
+      "id": "land",
+      "label": { "en": "Land Details", "hi": "भूमि विवरण" },
+      "order": 3,
+      "fields": ["state", "district", "sub_district", "village", "khasra_number", "land_area_hectares", "land_ownership"]
+    }
+  ],
+  "fields": {
+    "full_name": {
+      "type": "text",
+      "label": { "en": "Full Name (as on Aadhaar)", "hi": "पूरा नाम (आधार अनुसार)" },
+      "required": true,
+      "validation": {
+        "pattern": "^[\\p{L}\\p{M}\\s.]+$",
+        "min_length": 2,
+        "max_length": 100
+      },
+      "voice": {
+        "prompt": {
+          "en": "Please tell me your full name, exactly as it appears on your Aadhaar card.",
+          "hi": "कृपया अपना पूरा नाम बताइए, जैसा आपके आधार कार्ड पर लिखा है।"
+        },
+        "confirm": true,
+        "spell_mode": false,
+        "example": { "en": "For example, Ramesh Kumar Singh", "hi": "जैसे, रमेश कुमार सिंह" }
+      },
+      "autofill": { "source": "aadhaar_ekyc", "field": "name", "consent_required": true }
+    },
+    "father_name": {
+      "type": "text",
+      "label": { "en": "Father's/Husband's Name", "hi": "पिता/पति का नाम" },
+      "required": true,
+      "validation": {
+        "pattern": "^[\\p{L}\\p{M}\\s.]+$",
+        "min_length": 2,
+        "max_length": 100
+      },
+      "voice": {
+        "prompt": {
+          "en": "What is your father's or husband's name?",
+          "hi": "आपके पिता या पति का नाम क्या है?"
+        },
+        "confirm": true
+      }
+    },
+    "dob": {
+      "type": "date",
+      "label": { "en": "Date of Birth", "hi": "जन्म तिथि" },
+      "required": true,
+      "validation": {
+        "format": "date_dmy",
+        "min_value": "1940-01-01",
+        "max_value": "2008-12-31"
+      },
+      "voice": {
+        "prompt": {
+          "en": "What is your date of birth? Please tell the day, month, and year.",
+          "hi": "आपकी जन्म तिथि क्या है? कृपया दिन, महीना और साल बताइए।"
+        },
+        "confirm": true,
+        "example": { "en": "For example, 15 August 1975", "hi": "जैसे, 15 अगस्त 1975" }
+      }
+    },
+    "gender": {
+      "type": "select",
+      "label": { "en": "Gender", "hi": "लिंग" },
+      "required": true,
+      "options": [
+        { "value": "male", "label": { "en": "Male", "hi": "पुरुष" } },
+        { "value": "female", "label": { "en": "Female", "hi": "महिला" } },
+        { "value": "other", "label": { "en": "Other", "hi": "अन्य" } }
+      ],
+      "voice": {
+        "prompt": {
+          "en": "What is your gender? Male, Female, or Other?",
+          "hi": "आपका लिंग क्या है? पुरुष, महिला, या अन्य?"
+        },
+        "confirm": false
+      }
+    },
+    "category": {
+      "type": "select",
+      "label": { "en": "Social Category", "hi": "सामाजिक श्रेणी" },
+      "required": true,
+      "options": [
+        { "value": "general", "label": { "en": "General", "hi": "सामान्य" } },
+        { "value": "obc", "label": { "en": "OBC", "hi": "ओबीसी" } },
+        { "value": "sc", "label": { "en": "SC", "hi": "अनुसूचित जाति" } },
+        { "value": "st", "label": { "en": "ST", "hi": "अनुसूचित जनजाति" } }
+      ],
+      "voice": {
+        "prompt": {
+          "en": "What is your social category? General, OBC, SC, or ST?",
+          "hi": "आपकी सामाजिक श्रेणी क्या है? सामान्य, ओबीसी, अनुसूचित जाति, या अनुसूचित जनजाति?"
+        },
+        "confirm": false
+      }
+    },
+    "aadhaar_number": {
+      "type": "aadhaar",
+      "label": { "en": "Aadhaar Number", "hi": "आधार संख्या" },
+      "required": true,
+      "validation": {
+        "format": "aadhaar",
+        "checksum": "verhoeff"
+      },
+      "voice": {
+        "prompt": {
+          "en": "Please tell me your 12-digit Aadhaar number slowly.",
+          "hi": "कृपया अपना 12 अंकों का आधार नंबर धीरे-धीरे बताइए।"
+        },
+        "confirm": true,
+        "spell_mode": true,
+        "chunk_size": 4,
+        "chunk_prompt": {
+          "en": "Tell me the first 4 digits... Now the next 4... And the last 4...",
+          "hi": "पहले 4 अंक बताइए... अब अगले 4... और आखिरी 4..."
+        }
+      }
+    },
+    "mobile": {
+      "type": "mobile",
+      "label": { "en": "Mobile Number", "hi": "मोबाइल नंबर" },
+      "required": true,
+      "validation": {
+        "format": "mobile"
+      },
+      "voice": {
+        "prompt": {
+          "en": "What is your mobile number?",
+          "hi": "आपका मोबाइल नंबर क्या है?"
+        },
+        "confirm": true,
+        "spell_mode": true
+      }
+    },
+    "account_number": {
+      "type": "text",
+      "label": { "en": "Bank Account Number", "hi": "बैंक खाता संख्या" },
+      "required": true,
+      "validation": {
+        "pattern": "^[0-9]{9,18}$",
+        "min_length": 9,
+        "max_length": 18
+      },
+      "voice": {
+        "prompt": {
+          "en": "Please tell me your bank account number.",
+          "hi": "कृपया अपना बैंक खाता नंबर बताइए।"
+        },
+        "confirm": true,
+        "spell_mode": true
+      }
+    },
+    "confirm_account_number": {
+      "type": "text",
+      "label": { "en": "Confirm Account Number", "hi": "खाता नंबर पुष्टि" },
+      "required": true,
+      "validation": {
+        "pattern": "^[0-9]{9,18}$"
+      },
+      "voice": {
+        "prompt": {
+          "en": "Please repeat your account number for confirmation.",
+          "hi": "कृपया पुष्टि के लिए अपना खाता नंबर दोबारा बताइए।"
+        },
+        "confirm": false
+      }
+    },
+    "ifsc_code": {
+      "type": "ifsc",
+      "label": { "en": "IFSC Code", "hi": "IFSC कोड" },
+      "required": true,
+      "validation": {
+        "format": "ifsc",
+        "pattern": "^[A-Z]{4}0[A-Z0-9]{6}$"
+      },
+      "voice": {
+        "prompt": {
+          "en": "What is your bank's IFSC code? You can find it on your cheque book or passbook. If you don't know it, tell me your bank name and branch.",
+          "hi": "आपके बैंक का IFSC कोड क्या है? यह आपकी चेक बुक या पासबुक पर होता है। अगर नहीं पता तो बैंक का नाम और शाखा बताइए।"
+        },
+        "confirm": true,
+        "fallback_strategy": "bank_branch_lookup"
+      },
+      "lookup": {
+        "endpoint": "/api/v1/lookup/ifsc",
+        "input_fields": ["bank_name", "branch_name"],
+        "output_field": "ifsc_code"
+      }
+    },
+    "bank_name": {
+      "type": "text",
+      "label": { "en": "Bank Name", "hi": "बैंक का नाम" },
+      "required": true,
+      "voice": {
+        "prompt": {
+          "en": "What is the name of your bank?",
+          "hi": "आपके बैंक का नाम क्या है?"
+        },
+        "confirm": true
+      }
+    },
+    "state": {
+      "type": "geo_state",
+      "label": { "en": "State", "hi": "राज्य" },
+      "required": true,
+      "validation": { "source": "lgd_state_codes" },
+      "voice": {
+        "prompt": {
+          "en": "Which state is your land in?",
+          "hi": "आपकी जमीन किस राज्य में है?"
+        },
+        "confirm": true
+      }
+    },
+    "district": {
+      "type": "geo_district",
+      "label": { "en": "District", "hi": "जिला" },
+      "required": true,
+      "validation": { "source": "lgd_district_codes" },
+      "depends_on": { "field": "state", "filter_by": "state_code" },
+      "voice": {
+        "prompt": {
+          "en": "Which district?",
+          "hi": "कौन सा जिला?"
+        },
+        "confirm": true
+      }
+    },
+    "sub_district": {
+      "type": "geo_subdistrict",
+      "label": { "en": "Sub-District/Tehsil", "hi": "उप-जिला/तहसील" },
+      "required": true,
+      "validation": { "source": "lgd_subdistrict_codes" },
+      "depends_on": { "field": "district", "filter_by": "district_code" },
+      "voice": {
+        "prompt": {
+          "en": "Which tehsil or sub-district?",
+          "hi": "कौन सी तहसील?"
+        },
+        "confirm": true
+      }
+    },
+    "village": {
+      "type": "geo_village",
+      "label": { "en": "Village", "hi": "गांव" },
+      "required": true,
+      "validation": { "source": "lgd_village_codes" },
+      "depends_on": { "field": "sub_district", "filter_by": "subdistrict_code" },
+      "voice": {
+        "prompt": {
+          "en": "What is the name of your village?",
+          "hi": "आपके गांव का नाम क्या है?"
+        },
+        "confirm": true
+      }
+    },
+    "khasra_number": {
+      "type": "text",
+      "label": { "en": "Khasra/Survey Number", "hi": "खसरा/सर्वे नंबर" },
+      "required": true,
+      "validation": {
+        "pattern": "^[0-9A-Za-z/\\-\\s]+$",
+        "max_length": 50
+      },
+      "voice": {
+        "prompt": {
+          "en": "What is your land's Khasra number or Survey number?",
+          "hi": "आपकी जमीन का खसरा नंबर या सर्वे नंबर क्या है?"
+        },
+        "confirm": true,
+        "example": { "en": "For example, 123/4 or 56-A", "hi": "जैसे, 123/4 या 56-A" }
+      }
+    },
+    "land_area_hectares": {
+      "type": "number",
+      "label": { "en": "Land Area (in hectares)", "hi": "भूमि क्षेत्र (हेक्टेयर में)" },
+      "required": true,
+      "validation": {
+        "min_value": 0.01,
+        "max_value": 100
+      },
+      "voice": {
+        "prompt": {
+          "en": "How much land do you have, in hectares? If you know in bigha, tell me that and I'll convert.",
+          "hi": "आपके पास कितनी जमीन है, हेक्टेयर में? अगर बीघा में पता है तो वह बताइए, मैं बदल दूंगा।"
+        },
+        "confirm": true
+      }
+    },
+    "land_ownership": {
+      "type": "select",
+      "label": { "en": "Land Ownership Type", "hi": "भूमि स्वामित्व प्रकार" },
+      "required": true,
+      "options": [
+        { "value": "self", "label": { "en": "Self-owned", "hi": "स्वयं का" } },
+        { "value": "joint", "label": { "en": "Joint ownership", "hi": "संयुक्त स्वामित्व" } }
+      ],
+      "voice": {
+        "prompt": {
+          "en": "Is the land in your name only, or joint ownership?",
+          "hi": "जमीन सिर्फ आपके नाम पर है या संयुक्त?"
+        },
+        "confirm": false
+      }
+    }
+  },
+  "conditionals": [
+    {
+      "id": "st_tribal_certificate",
+      "if": { "field": "category", "operator": "eq", "value": "st" },
+      "then": { "show_fields": ["tribal_certificate_number"] }
+    },
+    {
+      "id": "joint_ownership_details",
+      "if": { "field": "land_ownership", "operator": "eq", "value": "joint" },
+      "then": { "show_fields": ["joint_owner_name", "joint_owner_aadhaar"] }
+    }
+  ],
+  "submission": {
+    "target": "api_setu",
+    "endpoint": "/pm-kisan/api/v1/register",
+    "method": "POST",
+    "auth": "aadhaar_esign",
+    "documents": {
+      "aadhaar_xml": { "source": "digilocker", "doc_type": "ADHAR" },
+      "land_record": { "source": "manual_upload_or_digilocker" }
+    }
+  }
+}
