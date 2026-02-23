@@ -120,7 +120,7 @@ class ConversationEngine:
         lang = session["language"]
 
         if state == SessionState.GREETING:
-            form_name = schema["metadata"]["name"].get(lang, schema["metadata"]["name"]["en"])
+            schema["metadata"]["name"].get(lang, schema["metadata"]["name"]["en"])
             est_time = schema["metadata"].get("estimated_time_minutes", 10)
             total = self._count_active_fields(session)
 
@@ -230,7 +230,7 @@ class ConversationEngine:
         field_def = session["schema"]["fields"][field_id]
         fs = session["field_states"][field_id]
         fs["attempts"] += 1
-        lang = session["language"]
+        session["language"]
 
         # Validate
         validation = self._validate_field(field_def, user_input)

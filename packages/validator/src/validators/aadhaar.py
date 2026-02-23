@@ -140,6 +140,6 @@ class AadhaarValidator:
             )
 
         # Format as XXXX XXXX XXXX for display
-        formatted = f"{digits[:4]} {digits[4:8]} {digits[8:12]}"
+        f"{digits[:4]} {digits[4:8]} {digits[8:12]}"
 
         return ValidationResult(valid=True, normalized=digits)

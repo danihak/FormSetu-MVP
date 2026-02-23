@@ -26,7 +26,7 @@ class PINCodeValidator:
         if len(digits) != 6:
             return ValidationResult(valid=False, error_code="PIN_LENGTH",
                                     message={"en": f"PIN code must be 6 digits, got {len(digits)}.",
-                                             "hi": f"पिन कोड 6 अंकों का होना चाहिए।"})
+                                             "hi": "पिन कोड 6 अंकों का होना चाहिए।"})
         if digits[0] == "0":
             return ValidationResult(valid=False, error_code="PIN_INVALID_START",
                                     message={"en": "PIN code cannot start with 0."})
