@@ -179,16 +179,37 @@ nums.forEach(([hi,en])=>{s=s.replace(new RegExp('\\b'+hi+'\\b','gi'),en);});
 return s;
 }
 function normalizeAlphaNum(input){
-let s=hindiToEng(input);
+let s=stripConversation(input);
+s=hindiToEng(s);
 s=s.replace(/[\s\-\.]/g,'').toUpperCase();
 return s;
 }
 function normalizeDigits(input){
-let s=hindiToEng(input);
+let s=stripConversation(input);
+s=hindiToEng(s);
 s=s.replace(/[\s\-]/g,'');
 s=s.replace(/[^\d]/g,'');
 return s;
 }
+// Strip conversational wrappers from voice input across ALL fields
+function stripConversation(input){
+let s=input.trim();
+// Hindi wrappers: "मेरा X है", "X है", "जी X", "हाँ X"
+s=s.replace(/^(जी\s*|हाँ\s*|हां\s*|yes\s*)/i,'');
+s=s.replace(/^(मेरा|मेरी|मेरे)\s+(आधार\s*(नंबर|कार्ड|नम्बर)?|पैन\s*(नंबर|नम्बर|कार्ड)?|मोबाइल\s*(नंबर|नम्बर)?|फोन\s*(नंबर|नम्बर)?|अकाउंट\s*(नंबर|नम्बर)?|खाता\s*(नंबर|नम्बर)?|बैंक\s*(खाता|अकाउंट)?\s*(नंबर|नम्बर)?|आईएफएससी(\s*कोड)?|पिन\s*(कोड)?|राज्य|स्टेट)\s*(है|हैं)?\s*/i,'');
+s=s.replace(/^(आधार\s*(नंबर|नम्बर)?|पैन\s*(नंबर|नम्बर)?|मोबाइल\s*(नंबर|नम्बर)?|फोन\s*(नंबर|नम्बर)?|अकाउंट\s*(नंबर|नम्बर)?|खाता\s*(नंबर|नम्बर)?|आईएफएससी(\s*कोड)?|पिन\s*(कोड)?)\s*(है|हैं)?\s*/i,'');
+s=s.replace(/\s*(है|हैं|बोल\s*रहा\s*हूं?|बोल\s*रही\s*हूं?|बता\s*रहा\s*हूं?|बता\s*रही\s*हूं?)\s*$/i,'');
+// English wrappers: "my X is Y", "X is Y", "it is Y"
+s=s.replace(/^(my\s+)?(aadhaar|aadhar|aadhar|pan|mobile|phone|account|bank\s*account|ifsc(\s*code)?|pin\s*(code)?|state)\s*(number|no\.?|num)?\s*(is|:)\s*/i,'');
+s=s.replace(/^(it\s*is|it's|that\s*is|that's)\s*/i,'');
+s=s.replace(/^(i\s*live\s*in|i\s*am\s*from|i\s*stay\s*in|i\s*reside\s*in|main\s*)\s*/i,'');
+s=s.replace(/^(मैं\s*)(रहता\s*(हूं?)?|रहती\s*(हूं?)?)\s*/i,'');
+s=s.replace(/^(मैं\s*)/i,'');
+s=s.replace(/\s*(में\s*रहता\s*(हूं?)?|में\s*रहती\s*(हूं?)?|में\s*रहते\s*(हैं?)?|से\s*हूं?|से\s*हूँ)\s*$/i,'');
+s=s.replace(/\s*(mein\s*rehta\s*hun|mein\s*rehti\s*hun)\s*$/i,'');
+return s.trim();
+}
+
 
 // VALIDATORS
 function vAadhaar(i){const d=normalizeDigits(i);const s=[];if(!d||!/^\d+$/.test(d))return{v:0,s:[{l:'Format',st:'fail',d:'Invalid characters',t:2}]};s.push({l:'Format check',st:d.length===12?'pass':'fail',d:d.length+'/12 digits',t:3});if(d.length!==12)return{v:0,s};const x=!['0','1'].includes(d[0]);s.push({l:'Start digit (UIDAI rule)',st:x?'pass':'fail',d:x?'Starts with '+d[0]+' ✓':'Cannot start 0/1',t:1});if(!x)return{v:0,s};const b=new Set(d).size===1;s.push({l:'Blocked pattern scan',st:b?'fail':'pass',d:b?'All same digits':'No blocked patterns',t:2});if(b)return{v:0,s};const c=V(d);s.push({l:'Verhoeff checksum (D₅ group)',st:c?'pass':'fail',d:c?'Checksum verified ✓':'Checksum failed — typo detected',t:12});return{v:c?1:0,s,n:d.slice(0,4)+' '+d.slice(4,8)+' '+d.slice(8)};}
@@ -197,7 +218,7 @@ function vIFSC(i){const c=normalizeAlphaNum(i);const s=[];const o=/^[A-Z]{4}0[A-
 function vMobile(i){let n=normalizeDigits(i);if(n.startsWith('+91'))n=n.slice(3);else if(n.startsWith('0091'))n=n.slice(4);else if(n.length>10&&n.startsWith('91'))n=n.slice(2);else if(n.length===11&&n.startsWith('0'))n=n.slice(1);const s=[];s.push({l:'Length',st:n.length===10?'pass':'fail',d:n.length+'/10',t:1});if(n.length!==10)return{v:0,s};const x=['6','7','8','9'].includes(n[0]);s.push({l:'Carrier prefix',st:x?'pass':'fail',d:x?'Starts '+n[0]+' ✓':'Must be 6-9',t:1});return{v:x?1:0,s,n};}
 function vAccount(i){const d=normalizeDigits(i);const s=[];const o=/^\d{9,18}$/.test(d);s.push({l:'Account format',st:o?'pass':'fail',d:o?d.length+' digits':'9-18 digits required',t:1});return{v:o?1:0,s,n:d};}
 
-function vState(i){const map={'andhra pradesh':'Andhra Pradesh','ap':'Andhra Pradesh','आंध्र प्रदेश':'Andhra Pradesh','assam':'Assam','असम':'Assam','bihar':'Bihar','बिहार':'Bihar','chhattisgarh':'Chhattisgarh','छत्तीसगढ़':'Chhattisgarh','cg':'Chhattisgarh','goa':'Goa','गोवा':'Goa','gujarat':'Gujarat','गुजरात':'Gujarat','gj':'Gujarat','haryana':'Haryana','हरियाणा':'Haryana','hr':'Haryana','himachal pradesh':'Himachal Pradesh','himachal':'Himachal Pradesh','hp':'Himachal Pradesh','हिमाचल प्रदेश':'Himachal Pradesh','jharkhand':'Jharkhand','झारखंड':'Jharkhand','jh':'Jharkhand','karnataka':'Karnataka','कर्नाटक':'Karnataka','ka':'Karnataka','kerala':'Kerala','केरल':'Kerala','kl':'Kerala','madhya pradesh':'Madhya Pradesh','mp':'Madhya Pradesh','मध्य प्रदेश':'Madhya Pradesh','maharashtra':'Maharashtra','mh':'Maharashtra','महाराष्ट्र':'Maharashtra','manipur':'Manipur','meghalaya':'Meghalaya','mizoram':'Mizoram','nagaland':'Nagaland','odisha':'Odisha','orissa':'Odisha','ओडिशा':'Odisha','punjab':'Punjab','पंजाब':'Punjab','pb':'Punjab','rajasthan':'Rajasthan','rj':'Rajasthan','raj':'Rajasthan','राजस्थान':'Rajasthan','sikkim':'Sikkim','tamil nadu':'Tamil Nadu','tamilnadu':'Tamil Nadu','tn':'Tamil Nadu','तमिल नाडु':'Tamil Nadu','telangana':'Telangana','ts':'Telangana','तेलंगाना':'Telangana','tripura':'Tripura','uttar pradesh':'Uttar Pradesh','up':'Uttar Pradesh','उत्तर प्रदेश':'Uttar Pradesh','uttarakhand':'Uttarakhand','uk':'Uttarakhand','उत्तराखंड':'Uttarakhand','west bengal':'West Bengal','wb':'West Bengal','पश्चिम बंगाल':'West Bengal','bengal':'West Bengal','delhi':'Delhi','dl':'Delhi','दिल्ली':'Delhi','new delhi':'Delhi','jammu and kashmir':'Jammu & Kashmir','jk':'Jammu & Kashmir','jammu kashmir':'Jammu & Kashmir'};const key=i.toLowerCase().trim();const direct=map[key];if(direct){const s=[{l:'LGD state registry',st:'pass',d:'Matched: '+direct,t:6}];return{v:1,s,n:direct};}const fuzzy=Object.keys(map).find(k=>k.includes(key)||key.includes(k));if(fuzzy){const s=[{l:'LGD state registry (fuzzy)',st:'pass',d:'Matched: '+map[fuzzy],t:8}];return{v:1,s,n:map[fuzzy]};}const s=[{l:'LGD state registry',st:'fail',d:'State "'+i+'" not found. Try full name or abbreviation (UP, MP, RJ etc.)',t:6}];return{v:0,s,n:i};}
+function vState(i){const cleaned=stripConversation(i);const map={'andhra pradesh':'Andhra Pradesh','ap':'Andhra Pradesh','आंध्र प्रदेश':'Andhra Pradesh','assam':'Assam','असम':'Assam','bihar':'Bihar','बिहार':'Bihar','chhattisgarh':'Chhattisgarh','छत्तीसगढ़':'Chhattisgarh','cg':'Chhattisgarh','goa':'Goa','गोवा':'Goa','gujarat':'Gujarat','गुजरात':'Gujarat','gj':'Gujarat','haryana':'Haryana','हरियाणा':'Haryana','hr':'Haryana','himachal pradesh':'Himachal Pradesh','himachal':'Himachal Pradesh','hp':'Himachal Pradesh','हिमाचल प्रदेश':'Himachal Pradesh','jharkhand':'Jharkhand','झारखंड':'Jharkhand','jh':'Jharkhand','karnataka':'Karnataka','कर्नाटक':'Karnataka','ka':'Karnataka','kerala':'Kerala','केरल':'Kerala','kl':'Kerala','madhya pradesh':'Madhya Pradesh','mp':'Madhya Pradesh','मध्य प्रदेश':'Madhya Pradesh','maharashtra':'Maharashtra','mh':'Maharashtra','महाराष्ट्र':'Maharashtra','manipur':'Manipur','meghalaya':'Meghalaya','mizoram':'Mizoram','nagaland':'Nagaland','odisha':'Odisha','orissa':'Odisha','ओडिशा':'Odisha','punjab':'Punjab','पंजाब':'Punjab','pb':'Punjab','rajasthan':'Rajasthan','rj':'Rajasthan','raj':'Rajasthan','राजस्थान':'Rajasthan','sikkim':'Sikkim','tamil nadu':'Tamil Nadu','tamilnadu':'Tamil Nadu','tn':'Tamil Nadu','तमिल नाडु':'Tamil Nadu','telangana':'Telangana','ts':'Telangana','तेलंगाना':'Telangana','tripura':'Tripura','uttar pradesh':'Uttar Pradesh','up':'Uttar Pradesh','उत्तर प्रदेश':'Uttar Pradesh','uttarakhand':'Uttarakhand','uk':'Uttarakhand','उत्तराखंड':'Uttarakhand','west bengal':'West Bengal','wb':'West Bengal','पश्चिम बंगाल':'West Bengal','bengal':'West Bengal','delhi':'Delhi','dl':'Delhi','दिल्ली':'Delhi','new delhi':'Delhi','jammu and kashmir':'Jammu & Kashmir','jk':'Jammu & Kashmir','jammu kashmir':'Jammu & Kashmir'};const key=cleaned.toLowerCase().trim();const direct=map[key];if(direct){const s=[{l:'LGD state registry',st:'pass',d:'Matched: '+direct,t:6}];return{v:1,s,n:direct};}const fuzzy=Object.keys(map).find(k=>k.includes(key)||key.includes(k));if(fuzzy){const s=[{l:'LGD state registry (fuzzy)',st:'pass',d:'Matched: '+map[fuzzy],t:8}];return{v:1,s,n:map[fuzzy]};}const s=[{l:'LGD state registry',st:'fail',d:'State "'+cleaned+'" not found. Try full name or abbreviation (UP, MP, RJ etc.)',t:6}];return{v:0,s,n:cleaned};}
 function vPIN(i){const p=normalizeDigits(i);const s=[];s.push({l:'Format',st:/^\d{6}$/.test(p)?'pass':'fail',d:/^\d{6}$/.test(p)?'6 digits ✓':'Must be 6 digits',t:1});if(!/^\d{6}$/.test(p))return{v:0,s};const R={1:'Delhi/Haryana/HP/Punjab',2:'UP/Uttarakhand',3:'Rajasthan/Gujarat',4:'Maharashtra/MP',5:'AP/KA/Telangana',6:'TN/Kerala',7:'WB/Odisha/NE',8:'Bihar/Jharkhand'};s.push({l:'India Post region map',st:R[p[0]]?'pass':'fail',d:R[p[0]]||'Invalid region',t:4});return{v:R[p[0]]?1:0,s,n:p};}
 
 // FIELDS
