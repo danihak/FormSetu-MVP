@@ -173,7 +173,7 @@ const nw={'निन्यानवे':99,'अट्ठानवे':98,'सत
 const nwSorted=Object.entries(nw).sort((a,b)=>b[0].length-a[0].length);
 nwSorted.forEach(([hi,en])=>{s=s.replace(new RegExp(hi,'g'),String(en));});
 // STEP 3: Hindi phonetic letter names → English (for PAN, IFSC — runs AFTER numbers)
-const letters=[['डब्ल्यू','W'],['एक्स','X'],['वाई','Y'],['ज़ेड','Z'],['जेड','Z'],['एफ','F'],['एच','H'],['एल','L'],['एम','M'],['एन','N'],['एस','S'],['बी','B'],['सी','C'],['डी','D'],['जी','G'],['आई','I'],['जे','J'],['के','K'],['पी','P'],['आर','R'],['टी','T'],['यू','U'],['वी','V'],['ज़ी','Z'],['ए','A'],['ई','E'],['ओ','O'],['ऐ','A']];
+const letters=[['डब्ल्यू','W'],['एक्स','X'],['वाई','Y'],['ज़ेड','Z'],['जेड','Z'],['एफ','F'],['एच','H'],['एल','L'],['एम','M'],['एन','N'],['एस','S'],['बी','B'],['सी','C'],['डी','D'],['जी','G'],['आई','I'],['जे','J'],['के','K'],['पी','P'],['आर','R'],['टी','T'],['यू','U'],['वी','V'],['ज़ी','Z'],['ए','A'],['ई','E'],['ओ','O'],['ऐ','A'],['क','K'],['ख','K'],['ग','G'],['ज','J'],['ट','T'],['ड','D'],['प','P'],['ब','B'],['म','M'],['न','N'],['र','R'],['ल','L'],['स','S'],['ह','H'],['फ','F'],['व','V'],['य','Y']];
 letters.sort((a,b)=>b[0].length-a[0].length);
 letters.forEach(([hi,en])=>{s=s.replace(new RegExp(hi,'g'),en);});
 return s;
@@ -199,10 +199,11 @@ function romanHindiNums(input){
 let pre=input.toLowerCase();
 // Digit resolver: word or digit → single digit char
 const dg=d=>{const m={'zero':'0','one':'1','two':'2','three':'3','four':'4','five':'5','six':'6','seven':'7','eight':'8','nine':'9','shunya':'0','ek':'1','do':'2','teen':'3','chaar':'4','char':'4','paanch':'5','panch':'5','chhah':'6','chhe':'6','saat':'7','aath':'8','nau':'9'};return m[d.toLowerCase()]||(/^\d$/.test(d)?d:null);};
-// English: double/triple/quadruple + digit
-pre=pre.replace(/(double|triple|quadruple)\s*(zero|one|two|three|four|five|six|seven|eight|nine|0|1|2|3|4|5|6|7|8|9)/gi,(m,rep,d)=>{const v=dg(d);if(!v)return m;const n={'double':2,'triple':3,'quadruple':4}[rep.toLowerCase()];return v.repeat(n);});
-// English: "N times digit" — "5 times 0", "3 times 4"
-pre=pre.replace(/(2|3|4|5|6|7|8|9|two|three|four|five|six|seven|eight|nine)\s*times\s*(zero|one|two|three|four|five|six|seven|eight|nine|0|1|2|3|4|5|6|7|8|9)/gi,(m,cnt,d)=>{const v=dg(d);const c=dg(cnt);if(!v||!c)return m;return v.repeat(parseInt(c));});
+// English: double/triple/quadruple + digit (including Hindi words and misspellings)
+const dPat='zero|one|two|three|four|five|six|seven|eight|nine|shunya|ek|teen|chaar|char|paanch|panch|chhah|chhe|saat|aath|nau|0|1|2|3|4|5|6|7|8|9';
+pre=pre.replace(new RegExp('(double|duble|triple|tripple|quadruple)\\s*('+dPat+')','gi'),(m,rep,d)=>{const v=dg(d);if(!v)return m;const n={'double':2,'duble':2,'triple':3,'tripple':3,'quadruple':4}[rep.toLowerCase()];return v.repeat(n);});
+// English: "N times digit"
+pre=pre.replace(new RegExp('(2|3|4|5|6|7|8|9|two|three|four|five|six|seven|eight|nine)\\s*times\\s*('+dPat+')','gi'),(m,cnt,d)=>{const v=dg(d);const c=dg(cnt);if(!v||!c)return m;return v.repeat(parseInt(c));});
 // Hindi: "do baar 5", "teen baar six", "paanch baar 0" — count THEN baar THEN digit
 pre=pre.replace(/(do|teen|chaar|char|paanch|panch|chhah|saat|aath|nau|2|3|4|5|6|7|8|9)\s*(baar|बार)\s*(zero|one|two|three|four|five|six|seven|eight|nine|shunya|ek|do|teen|chaar|char|paanch|panch|chhah|chhe|saat|aath|nau|0|1|2|3|4|5|6|7|8|9)/gi,(m,cnt,baar,d)=>{const v=dg(d);const c=dg(cnt);if(!v||!c)return m;return v.repeat(parseInt(c));});
 // Hindi: "digit do baar", "6 teen baar" — digit THEN count+baar (reverse order)
