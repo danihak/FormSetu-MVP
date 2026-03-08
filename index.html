@@ -252,7 +252,7 @@ function vPIN(i){const p=normalizeDigits(i);const s=[];s.push({l:'Format',st:/^\
 
 // FIELDS
 const F=[
-{id:'name',lbl:'Full Name',hi:'आपका पूरा नाम बताइए, जैसा आधार कार्ड पर है।',en:'Tell me your full name as on Aadhaar card.',ph:'e.g. Ramesh Kumar',fn:v=>{let n=v.trim();
+{id:'name',lbl:'Full Name',lang:'hi-IN',hi:'आपका पूरा नाम बताइए, जैसा आधार कार्ड पर है।',en:'Tell me your full name as on Aadhaar card.',ph:'e.g. Ramesh Kumar',fn:v=>{let n=v.trim();
 // Strip Hindi wrappers
 n=n.replace(/^(जी\s*)?मेरा\s*नाम\s*/i,'');
 n=n.replace(/^(जी\s*)?नाम\s*/i,'');
@@ -269,13 +269,13 @@ n=n.replace(/^(hi\s*|hello\s*|hey\s*)?i'm\s*/i,'');
 n=n.trim();
 return{v:n.length>=2?1:0,s:[{l:'Name extraction',st:n.length>=2?'pass':'fail',d:n.length>=2?'Extracted: '+n:'Name too short',t:1}],n};
 }},
-{id:'aadhaar',lbl:'Aadhaar Number',hi:'अपना 12 अंकों का आधार नंबर बताइए।',en:'Your 12-digit Aadhaar number.',ph:'e.g. 4991 1866 5246',fn:vAadhaar},
-{id:'mobile',lbl:'Mobile Number',hi:'अपना मोबाइल नंबर बताइए।',en:'Your mobile number.',ph:'e.g. 9876543210',fn:vMobile},
-{id:'pan',lbl:'PAN Number',hi:'अपना पैन नंबर बताइए।',en:'Your PAN number.',ph:'e.g. ABCDE1234F',fn:vPAN},
-{id:'ifsc',lbl:'Bank IFSC',hi:'अपने बैंक का IFSC कोड बताइए।',en:'Bank IFSC code (on passbook/cheque).',ph:'e.g. SBIN0001234',fn:vIFSC},
-{id:'account',lbl:'Account Number',hi:'बैंक खाता नंबर बताइए।',en:'Bank account number.',ph:'e.g. 12345678901234',fn:vAccount},
-{id:'state',lbl:'State',hi:'आप किस राज्य में रहते हैं?',en:'Which state do you live in?',ph:'e.g. Rajasthan',fn:vState,opts:['Rajasthan','Uttar Pradesh','Maharashtra','Bihar','Gujarat','Tamil Nadu','Karnataka','West Bengal']},
-{id:'pincode',lbl:'PIN Code',hi:'अपना पिन कोड बताइए।',en:'Your area PIN code.',ph:'e.g. 313001',fn:vPIN},
+{id:'aadhaar',lbl:'Aadhaar Number',lang:'hi-IN',hi:'अपना 12 अंकों का आधार नंबर बताइए।',en:'Your 12-digit Aadhaar number.',ph:'e.g. 4991 1866 5246',fn:vAadhaar},
+{id:'mobile',lbl:'Mobile Number',lang:'hi-IN',hi:'अपना मोबाइल नंबर बताइए।',en:'Your mobile number.',ph:'e.g. 9876543210',fn:vMobile},
+{id:'pan',lbl:'PAN Number',lang:'en-IN',hi:'अपना पैन नंबर spell करें — A B C D E 1 2 3 4 F',en:'Spell your PAN letter by letter.',ph:'e.g. ABCDE1234F',fn:vPAN},
+{id:'ifsc',lbl:'Bank IFSC',lang:'en-IN',hi:'अपने बैंक का IFSC कोड spell करें।',en:'Spell your bank IFSC code.',ph:'e.g. SBIN0001234',fn:vIFSC},
+{id:'account',lbl:'Account Number',lang:'en-IN',hi:'बैंक खाता नंबर बताइए।',en:'Bank account number.',ph:'e.g. 12345678901234',fn:vAccount},
+{id:'state',lbl:'State',lang:'hi-IN',hi:'आप किस राज्य में रहते हैं?',en:'Which state do you live in?',ph:'e.g. Rajasthan',fn:vState,opts:['Rajasthan','Uttar Pradesh','Maharashtra','Bihar','Gujarat','Tamil Nadu','Karnataka','West Bengal']},
+{id:'pincode',lbl:'PIN Code',lang:'en-IN',hi:'अपना पिन कोड बताइए।',en:'Your area PIN code.',ph:'e.g. 313001',fn:vPIN},
 ];
 
 let cF=-1,busy=0,rec=0,SR=null,uLang='hi-IN';
@@ -292,7 +292,10 @@ document.getElementById('vsText').textContent='Heard: "'+(fullText+interim).trim
 if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const result=fullText.trim();fullText='';if(result){stopM();proc(result);}},5000);};
 SR.onerror=()=>{fullText='';stopM();};
 SR.onend=()=>{if(rec){if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const result=fullText.trim();fullText='';if(result){stopM();proc(result);}else{stopM();}},5000);try{SR.start();}catch(e){}}};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
-function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;
+function startM(){if(!SR){initSR();if(!SR)return;}
+// Recreate SR if language changed (Chrome doesn't always honor lang change on existing instance)
+if(SR.lang!==uLang){SR=null;initSR();if(!SR)return;}
+rec=1;SR.lang=uLang;
 if(window.speechSynthesis)window.speechSynthesis.cancel();
 try{SR.start();}catch(e){}
 document.getElementById('micBtn').classList.add('rec');document.getElementById('vsText').textContent='🔴 Listening...';document.getElementById('vsText').style.color='var(--red)';document.getElementById('vsSub').textContent='Speak now. I will wait 5 seconds after you stop.';animW();}
@@ -322,7 +325,11 @@ async function animVal(steps){const b=document.getElementById('vpBody');b.innerH
 // ENGINE
 async function askF(i){cF=i;updProg();if(i>=F.length){addTyp();await dl(600);rmTyp();botMsg('<strong>✅ फॉर्म पूरा हो गया!</strong><br>All '+F.length+' fields captured and validated.<br><br><span style="font-size:0.82rem;color:var(--text-dim)">In production: submitted to PM-KISAN portal via API Setu → Reference number generated → SMS confirmation to registered mobile.</span>','फॉर्म पूरा हो गया! सभी फ़ील्ड वेरिफाई हो चुकी हैं।');document.getElementById('pCircle').setAttribute('stroke-dashoffset','0');document.getElementById('pPct').textContent='100%';document.getElementById('sDot').className='dot off';document.getElementById('sLbl').textContent='Complete';ti.disabled=1;document.getElementById('tb').disabled=1;return;}
 const f=F[i];setActive(f.id);addTyp();await dl(400+Math.random()*250);rmTyp();
-botMsg('<strong>'+f.lbl+'</strong><br><span style="color:var(--orange)">'+f.hi+'</span><br><span style="font-size:0.8rem;color:var(--text-dim)">'+f.en+'</span>',f.hi);
+// Auto-switch mic language per field type
+uLang=f.lang||'hi-IN';if(SR)SR.lang=uLang;
+document.getElementById('langLbl').textContent=uLang==='hi-IN'?'Hindi':'English';
+const langNote=uLang==='en-IN'?'<br><span style="font-size:0.75rem;color:var(--accent)">🎤 Mic: English mode — spell letters in English</span>':'';
+botMsg('<strong>'+f.lbl+'</strong><br><span style="color:var(--orange)">'+f.hi+'</span><br><span style="font-size:0.8rem;color:var(--text-dim)">'+f.en+'</span>'+langNote,f.hi);
 if(f.opts){await dl(250);addQR(f.opts);}
 ti.disabled=0;document.getElementById('tb').disabled=0;ti.placeholder=f.ph;ti.focus();}
 
