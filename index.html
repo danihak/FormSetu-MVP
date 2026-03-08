@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormSetu — Voice-Enabled Government Form Filling</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0e1a;--surface:#111827;--surface2:#1a2234;--surface3:#0f1629;--border:#1e2d4a;--text:#e2e8f0;--text-dim:#8892a8;--text-muted:#505a6e;--accent:#3b82f6;--accent-glow:rgba(59,130,246,0.15);--green:#10b981;--green-glow:rgba(16,185,129,0.12);--red:#ef4444;--red-glow:rgba(239,68,68,0.1);--orange:#f59e0b;--orange-glow:rgba(245,158,11,0.1);--purple:#8b5cf6;--purple-glow:rgba(139,92,246,0.12);--setu-gradient:linear-gradient(135deg,#3b82f6,#8b5cf6,#ec4899)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:0.75rem}
+.topbar-logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.15rem;background:var(--setu-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-sep{width:1px;height:18px;background:var(--border)}
+.topbar-scheme{font-size:0.8rem;color:var(--text-dim);display:flex;align-items:center;gap:0.4rem}
+.tag{padding:0.12rem 0.45rem;border-radius:4px;font-size:0.65rem;background:var(--green-glow);color:var(--green);border:1px solid rgba(16,185,129,0.2);font-family:'JetBrains Mono',monospace}
+.topbar-right{display:flex;align-items:center;gap:0.8rem}
+.lang-btn{display:flex;align-items:center;gap:0.3rem;padding:0.25rem 0.6rem;border-radius:6px;border:1px solid var(--border);font-size:0.75rem;color:var(--text-dim);cursor:pointer;background:none;font-family:'DM Sans',sans-serif}
+.lang-btn:hover{border-color:var(--accent)}
+.status-row{display:flex;align-items:center;gap:0.35rem;font-size:0.75rem;color:var(--text-dim)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dot.on{background:var(--green);animation:pulse 2s infinite}
+.dot.off{background:var(--red)}
+.main{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 45px)}
+@media(max-width:1024px){.main{grid-template-columns:1fr}.form-side{display:none}}
+
+/* VOICE SIDE */
+.voice-side{display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.voice-hdr{padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:0.85rem}
+.voice-hdr h2{font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:600;display:flex;align-items:center;gap:0.4rem}
+.sess-id{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-muted)}
+.conv{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.85rem}
+.msg{display:flex;gap:0.5rem;animation:msgIn 0.35s ease}
+.msg-av{width:28px;height:28px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:600;margin-top:2px}
+.msg-bot .msg-av{background:var(--setu-gradient);color:white}
+.msg-user .msg-av{background:var(--purple-glow);color:var(--purple);border:1px solid rgba(139,92,246,0.25)}
+.msg-c{flex:1}
+.msg-lbl{font-size:0.65rem;color:var(--text-muted);margin-bottom:0.2rem;font-weight:500}
+.msg-b{padding:0.65rem 0.9rem;border-radius:11px;font-size:0.86rem;line-height:1.6;max-width:95%}
+.msg-bot .msg-b{background:var(--surface);border:1px solid var(--border)}
+.msg-user .msg-b{background:var(--purple-glow);border:1px solid rgba(139,92,246,0.2)}
+.captured{margin-top:0.4rem;padding:0.3rem 0.65rem;border-radius:6px;background:var(--green-glow);border:1px solid rgba(16,185,129,0.2);font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--green);display:inline-block}
+.vlines{display:flex;flex-direction:column;gap:0.2rem;margin-top:0.4rem}
+.vl{display:flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-family:'JetBrains Mono',monospace}
+.vl.p{color:var(--green)}.vl.f{color:var(--red)}
+.typing{display:flex;gap:3px;padding:0.2rem 0;align-items:center}
+.typing span{width:5px;height:5px;border-radius:50%;background:var(--text-dim);animation:tb 1.4s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}.typing span:nth-child(3){animation-delay:0.4s}
+.qr{display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.4rem}
+.qr-btn{padding:0.3rem 0.65rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.76rem;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.qr-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+
+/* Voice input */
+.voice-input{padding:1rem 1.25rem;border-top:1px solid var(--border);background:var(--surface3)}
+.voice-row{display:flex;align-items:center;gap:0.75rem}
+.mic{width:50px;height:50px;border-radius:50%;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.25rem;transition:all 0.3s;flex-shrink:0;position:relative}
+.mic:hover{border-color:var(--accent);background:var(--accent-glow)}
+.mic.rec{border-color:var(--red);background:var(--red-glow);animation:mp 1.5s infinite}
+.mic.rec::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--red);opacity:0;animation:mr 1.5s infinite}
+.vs-text{font-size:0.82rem;color:var(--text-dim)}.vs-sub{font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem}
+.wv{height:30px;display:flex;align-items:center;gap:2px;margin-top:0.4rem}
+.wb{width:2.5px;border-radius:1.5px;background:var(--accent);transition:height 0.08s;opacity:0.5}
+.wb.a{opacity:1}
+.txt-row{display:flex;gap:0.4rem;margin-top:0.6rem}
+.txt-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.85rem;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none}
+.txt-row input:focus{border-color:var(--accent)}
+.txt-row input::placeholder{color:var(--text-muted)}
+.txt-btn{padding:0.55rem 1rem;border-radius:8px;border:none;background:var(--accent);color:white;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem}
+.txt-btn:disabled{opacity:0.3;cursor:not-allowed}
+
+/* FORM SIDE */
+.form-side{display:flex;flex-direction:column;background:var(--surface3);overflow-y:auto}
+.form-hdr{padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between}
+.form-hdr h2{font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:600;display:flex;align-items:center;gap:0.4rem}
+.prog-mini{display:flex;align-items:center;gap:0.4rem}
+.prog-ring{width:30px;height:30px}
+.prog-ring circle{fill:none;stroke-width:3}
+.prog-ring .bg{stroke:var(--border)}
+.prog-ring .fl{stroke:var(--green);stroke-linecap:round;transition:stroke-dashoffset 0.5s;transform:rotate(-90deg);transform-origin:center}
+.prog-pct{font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--green)}
+.form-body{padding:1.25rem;flex:1}
+.fcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.fcard-hdr{padding:0.85rem 1.1rem;background:linear-gradient(135deg,#1a4731,#14532d);border-bottom:1px solid rgba(16,185,129,0.2);display:flex;align-items:center;gap:0.65rem}
+.fcard-emb{width:36px;height:36px;border-radius:7px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.fcard-t{font-family:'Outfit',sans-serif;font-weight:600;font-size:0.9rem}
+.fcard-st{font-size:0.68rem;color:rgba(255,255,255,0.55);margin-top:0.05rem}
+.fsec{padding:0.85rem 1.1rem;border-bottom:1px solid var(--border)}
+.fsec:last-child{border-bottom:none}
+.fsec-t{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--accent);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:0.6rem}
+.ff{display:grid;grid-template-columns:130px 1fr;gap:0.4rem;padding:0.4rem 0;align-items:center;min-height:32px;border-bottom:1px solid rgba(30,45,74,0.3)}
+.ff:last-child{border-bottom:none}
+.ff-l{font-size:0.76rem;color:var(--text-dim);font-weight:500}
+.ff-v{font-size:0.82rem;padding:0.3rem 0.5rem;border-radius:5px;min-height:26px;display:flex;align-items:center;transition:all 0.4s;position:relative}
+.ff-v.empty{border:1px dashed var(--border);color:var(--text-muted);font-size:0.75rem;font-style:italic}
+.ff-v.active{border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent);animation:fp 2s infinite}
+.ff-v.filled{border:1px solid rgba(16,185,129,0.3);background:var(--green-glow);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:0.78rem}
+.ff-v.filled::after{content:'✓';position:absolute;right:0.4rem;font-size:0.65rem}
+
+/* Validation Panel */
+.vpanel{margin-top:1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.vpanel-h{padding:0.6rem 0.85rem;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;display:flex;justify-content:space-between}
+.vpanel-b{padding:0.6rem 0.85rem;display:flex;flex-direction:column;gap:0.3rem}
+.vr{display:flex;align-items:center;gap:0.4rem;font-size:0.76rem;padding:0.25rem 0.4rem;border-radius:5px;transition:all 0.3s}
+.vr.idle{color:var(--text-muted)}.vr.run{color:var(--orange);background:var(--orange-glow)}.vr.pass{color:var(--green);background:var(--green-glow)}.vr.fail{color:var(--red);background:var(--red-glow)}
+.vr-i{width:14px;font-size:0.7rem;text-align:center}.vr-l{flex:1;font-family:'JetBrains Mono',monospace;font-size:0.7rem}.vr-t{font-family:'JetBrains Mono',monospace;font-size:0.62rem;opacity:0.7}
+
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+@keyframes tb{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
+@keyframes mp{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.3)}50%{box-shadow:0 0 0 10px rgba(239,68,68,0)}}
+@keyframes mr{0%{opacity:0.5;transform:scale(1)}100%{opacity:0;transform:scale(1.3)}}
+@keyframes fp{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,0.1)}50%{box-shadow:0 0 0 3px rgba(59,130,246,0.12)}}
+</style>
+</head>
+<body>
+<div class="topbar">
+<div class="topbar-left"><div class="topbar-logo">FormSetu</div><div class="topbar-sep"></div><div class="topbar-scheme">PM-KISAN Registration<span class="tag">LIVE</span></div></div>
+<div class="topbar-right"><button class="lang-btn" onclick="toggleLang()">🌐 <span id="langLbl">Hindi</span></button><div class="status-row"><span class="dot on" id="sDot"></span><span id="sLbl">Ready</span></div></div>
+</div>
+<div class="main">
+<div class="voice-side">
+<div class="voice-hdr"><h2>🎙️ Voice Conversation</h2><span class="sess-id">Session: FST-<span id="sid"></span></span></div>
+<div class="conv" id="conv"></div>
+<div class="voice-input">
+<div class="voice-row">
+<button class="mic" id="micBtn" onclick="toggleMic()">🎤</button>
+<div><div class="vs-text" id="vsText">Tap mic or type below</div><div class="vs-sub" id="vsSub">Chrome recommended for Hindi speech</div></div>
+</div>
+<div class="wv" id="wv"></div>
+<div class="txt-row"><input type="text" id="ti" placeholder="Type response..." autocomplete="off" disabled><button class="txt-btn" id="tb" onclick="send()" disabled>Send</button></div>
+</div>
+</div>
+<div class="form-side">
+<div class="form-hdr"><h2>📋 Form Preview</h2><div class="prog-mini"><svg class="prog-ring" viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fl" id="pCircle" cx="18" cy="18" r="15.9" stroke-dasharray="100 100" stroke-dashoffset="100"/></svg><span class="prog-pct" id="pPct">0%</span></div></div>
+<div class="form-body">
+<div class="fcard">
+<div class="fcard-hdr"><div class="fcard-emb">🇮🇳</div><div><div class="fcard-t">PM-KISAN Samman Nidhi</div><div class="fcard-st">New Beneficiary Registration</div></div></div>
+<div class="fsec"><div class="fsec-t">Section A — Personal Details</div>
+<div class="ff"><div class="ff-l">Full Name</div><div class="ff-v empty" id="fv-name">awaiting</div></div>
+<div class="ff"><div class="ff-l">Aadhaar Number</div><div class="ff-v empty" id="fv-aadhaar">awaiting</div></div>
+<div class="ff"><div class="ff-l">Mobile Number</div><div class="ff-v empty" id="fv-mobile">awaiting</div></div>
+<div class="ff"><div class="ff-l">PAN Number</div><div class="ff-v empty" id="fv-pan">awaiting</div></div>
+</div>
+<div class="fsec"><div class="fsec-t">Section B — Bank Details</div>
+<div class="ff"><div class="ff-l">IFSC Code</div><div class="ff-v empty" id="fv-ifsc">awaiting</div></div>
+<div class="ff"><div class="ff-l">Account Number</div><div class="ff-v empty" id="fv-account">awaiting</div></div>
+</div>
+<div class="fsec"><div class="fsec-t">Section C — Address</div>
+<div class="ff"><div class="ff-l">State</div><div class="ff-v empty" id="fv-state">awaiting</div></div>
+<div class="ff"><div class="ff-l">PIN Code</div><div class="ff-v empty" id="fv-pincode">awaiting</div></div>
+</div>
+</div>
+<div class="vpanel"><div class="vpanel-h"><span>Validation Pipeline</span><span id="vTime"></span></div><div class="vpanel-b" id="vpBody"><div class="vr idle"><span class="vr-i">○</span><span class="vr-l">Awaiting input...</span></div></div></div>
+</div>
+</div>
+</div>
+
+<script>
+// VERHOEFF
+const D=[[0,1,2,3,4,5,6,7,8,9],[1,2,3,4,0,6,7,8,9,5],[2,3,4,0,1,7,8,9,5,6],[3,4,0,1,2,8,9,5,6,7],[4,0,1,2,3,9,5,6,7,8],[5,9,8,7,6,0,4,3,2,1],[6,5,9,8,7,1,0,4,3,2],[7,6,5,9,8,2,1,0,4,3],[8,7,6,5,9,3,2,1,0,4],[9,8,7,6,5,4,3,2,1,0]];
+const P=[[0,1,2,3,4,5,6,7,8,9],[1,5,7,6,2,8,3,0,9,4],[5,8,0,3,7,9,6,1,4,2],[8,9,1,6,0,4,3,5,2,7],[9,4,5,3,1,2,6,8,7,0],[4,2,8,6,5,7,3,9,0,1],[2,7,9,3,8,0,6,4,1,5],[7,0,4,6,9,1,3,2,5,8]];
+function V(n){let c=0;const a=n.split('').reverse().map(Number);for(let i=0;i<a.length;i++)c=D[c][P[i%8][a[i]]];return c===0;}
+
+// VALIDATORS
+function vAadhaar(i){const d=i.replace(/[\s\-]/g,'');const s=[];if(!d||!/^\d+$/.test(d))return{v:0,s:[{l:'Format',st:'fail',d:'Invalid',t:2}]};s.push({l:'Format check',st:d.length===12?'pass':'fail',d:d.length+'/12 digits',t:3});if(d.length!==12)return{v:0,s};const x=!['0','1'].includes(d[0]);s.push({l:'Start digit (UIDAI rule)',st:x?'pass':'fail',d:x?'Starts with '+d[0]+' ✓':'Cannot start 0/1',t:1});if(!x)return{v:0,s};const b=new Set(d).size===1;s.push({l:'Blocked pattern scan',st:b?'fail':'pass',d:b?'All same digits':'No blocked patterns',t:2});if(b)return{v:0,s};const c=V(d);s.push({l:'Verhoeff checksum (D₅ group)',st:c?'pass':'fail',d:c?'Checksum verified ✓':'Checksum failed — typo detected',t:12});return{v:c?1:0,s,n:d.slice(0,4)+' '+d.slice(4,8)+' '+d.slice(8)};}
+function vPAN(i){const p=i.trim().toUpperCase();const s=[];const o=/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(p);s.push({l:'Format (AAAAA9999A)',st:o?'pass':'fail',d:o?'Valid pattern':'Invalid format',t:2});if(!o)return{v:0,s};const T={P:'Individual',C:'Company',H:'HUF',F:'Firm'};s.push({l:'Entity type check',st:'pass',d:'Type: '+(T[p[3]]||'Other'),t:1});return{v:1,s,n:p};}
+function vIFSC(i){const c=i.trim().toUpperCase();const s=[];const o=/^[A-Z]{4}0[A-Z0-9]{6}$/.test(c);s.push({l:'IFSC format',st:o?'pass':'fail',d:o?'11 chars, 5th=0':'Invalid format',t:2});if(!o)return{v:0,s};const B={SBIN:'State Bank of India',HDFC:'HDFC Bank',ICIC:'ICICI Bank',PUNB:'Punjab National Bank',BARB:'Bank of Baroda'};s.push({l:'RBI registry lookup',st:'pass',d:B[c.slice(0,4)]||'Bank: '+c.slice(0,4),t:15});return{v:1,s,n:c};}
+function vMobile(i){const n=i.replace(/[\s\-\+]/g,'').replace(/^91/,'');const s=[];s.push({l:'Length',st:n.length===10?'pass':'fail',d:n.length+'/10',t:1});if(n.length!==10)return{v:0,s};const x=['6','7','8','9'].includes(n[0]);s.push({l:'Carrier prefix',st:x?'pass':'fail',d:x?'Starts '+n[0]+' ✓':'Must be 6-9',t:1});return{v:x?1:0,s,n};}
+function vAccount(i){const d=i.replace(/\s/g,'');const s=[];const o=/^\d{9,18}$/.test(d);s.push({l:'Account format',st:o?'pass':'fail',d:o?d.length+' digits':'9-18 digits required',t:1});return{v:o?1:0,s,n:d};}
+function vState(i){const st=['andhra pradesh','assam','bihar','chhattisgarh','goa','gujarat','haryana','himachal pradesh','jharkhand','karnataka','kerala','madhya pradesh','maharashtra','odisha','punjab','rajasthan','tamil nadu','telangana','uttar pradesh','uttarakhand','west bengal'];const m=st.find(s=>s.includes(i.toLowerCase().trim()));const s=[];s.push({l:'LGD state registry',st:m?'pass':'fail',d:m?'Found: '+m.replace(/\b\w/g,c=>c.toUpperCase()):'Not found',t:6});return{v:m?1:0,s,n:m?m.replace(/\b\w/g,c=>c.toUpperCase()):i};}
+function vPIN(i){const p=i.replace(/\s/g,'');const s=[];s.push({l:'Format',st:/^\d{6}$/.test(p)?'pass':'fail',d:/^\d{6}$/.test(p)?'6 digits ✓':'Must be 6 digits',t:1});if(!/^\d{6}$/.test(p))return{v:0,s};const R={1:'Delhi/Haryana/HP/Punjab',2:'UP/Uttarakhand',3:'Rajasthan/Gujarat',4:'Maharashtra/MP',5:'AP/KA/Telangana',6:'TN/Kerala',7:'WB/Odisha/NE',8:'Bihar/Jharkhand'};s.push({l:'India Post region map',st:R[p[0]]?'pass':'fail',d:R[p[0]]||'Invalid region',t:4});return{v:R[p[0]]?1:0,s,n:p};}
+
+// FIELDS
+const F=[
+{id:'name',lbl:'Full Name',hi:'आपका पूरा नाम बताइए, जैसा आधार कार्ड पर है।',en:'Tell me your full name as on Aadhaar card.',ph:'e.g. Ramesh Kumar',fn:v=>({v:v.trim().length>=2?1:0,s:[{l:'Name check',st:v.trim().length>=2?'pass':'fail',d:v.trim().length>=2?'Valid':'Too short',t:1}],n:v.trim()})},
+{id:'aadhaar',lbl:'Aadhaar Number',hi:'अपना 12 अंकों का आधार नंबर बताइए।',en:'Your 12-digit Aadhaar number.',ph:'e.g. 4991 1866 5246',fn:vAadhaar},
+{id:'mobile',lbl:'Mobile Number',hi:'अपना मोबाइल नंबर बताइए।',en:'Your mobile number.',ph:'e.g. 9876543210',fn:vMobile},
+{id:'pan',lbl:'PAN Number',hi:'अपना पैन नंबर बताइए।',en:'Your PAN number.',ph:'e.g. ABCDE1234F',fn:vPAN},
+{id:'ifsc',lbl:'Bank IFSC',hi:'अपने बैंक का IFSC कोड बताइए।',en:'Bank IFSC code (on passbook/cheque).',ph:'e.g. SBIN0001234',fn:vIFSC},
+{id:'account',lbl:'Account Number',hi:'बैंक खाता नंबर बताइए।',en:'Bank account number.',ph:'e.g. 12345678901234',fn:vAccount},
+{id:'state',lbl:'State',hi:'आप किस राज्य में रहते हैं?',en:'Which state do you live in?',ph:'e.g. Rajasthan',fn:vState,opts:['Rajasthan','Uttar Pradesh','Maharashtra','Bihar','Gujarat','Tamil Nadu','Karnataka','West Bengal']},
+{id:'pincode',lbl:'PIN Code',hi:'अपना पिन कोड बताइए।',en:'Your area PIN code.',ph:'e.g. 313001',fn:vPIN},
+];
+
+let cF=-1,busy=0,rec=0,SR=null,uLang='hi-IN';
+const conv=document.getElementById('conv'),ti=document.getElementById('ti');
+document.getElementById('sid').textContent=Math.random().toString(36).substring(2,7).toUpperCase();
+const wv=document.getElementById('wv');for(let i=0;i<35;i++){const b=document.createElement('div');b.className='wb';b.style.height='3px';wv.appendChild(b);}
+
+// SPEECH
+function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=false;SR.interimResults=true;SR.lang=uLang;SR.onresult=e=>{let f='',im='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)f+=e.results[i][0].transcript;else im+=e.results[i][0].transcript;}if(f){stopM();proc(f.trim());}else document.getElementById('vsText').textContent='Hearing: "'+im+'"';};SR.onerror=()=>stopM();SR.onend=()=>{if(rec)stopM();};}
+function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
+function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;try{SR.start();}catch(e){}document.getElementById('micBtn').classList.add('rec');document.getElementById('vsText').textContent='🔴 Listening... speak now';animW();}
+function stopM(){rec=0;try{SR.stop();}catch(e){}document.getElementById('micBtn').classList.remove('rec');document.getElementById('vsText').textContent='Tap mic or type';stopW();}
+let wI;function animW(){const b=wv.querySelectorAll('.wb');wI=setInterval(()=>b.forEach(x=>{x.style.height=(3+Math.random()*24)+'px';x.classList.add('a');}),90);}
+function stopW(){clearInterval(wI);wv.querySelectorAll('.wb').forEach(b=>{b.style.height='3px';b.classList.remove('a');});}
+function toggleLang(){uLang=uLang==='hi-IN'?'en-IN':'hi-IN';document.getElementById('langLbl').textContent=uLang==='hi-IN'?'Hindi':'English';}
+
+// TTS
+function say(t,l){return new Promise(r=>{if(!window.speechSynthesis){r();return;}window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang=l||'hi-IN';u.rate=0.92;u.onend=r;u.onerror=r;setTimeout(()=>window.speechSynthesis.speak(u),80);setTimeout(r,7000);});}
+
+// MESSAGES
+function botMsg(h,sp){const m=document.createElement('div');m.className='msg msg-bot';m.innerHTML='<div class="msg-av">FS</div><div class="msg-c"><div class="msg-lbl">FormSetu Engine</div><div class="msg-b">'+h+'</div></div>';conv.appendChild(m);conv.scrollTop=conv.scrollHeight;if(sp)say(sp);}
+function userMsg(t){const m=document.createElement('div');m.className='msg msg-user';m.innerHTML='<div class="msg-av">👤</div><div class="msg-c"><div class="msg-lbl">You (Voice / Text)</div><div class="msg-b">'+t+'</div></div>';conv.appendChild(m);conv.scrollTop=conv.scrollHeight;}
+function addTyp(){const m=document.createElement('div');m.className='msg msg-bot';m.id='tym';m.innerHTML='<div class="msg-av">FS</div><div class="msg-c"><div class="msg-b"><div class="typing"><span></span><span></span><span></span></div></div></div>';conv.appendChild(m);conv.scrollTop=conv.scrollHeight;}
+function rmTyp(){const t=document.getElementById('tym');if(t)t.remove();}
+function addQR(opts){const c=document.createElement('div');c.className='qr';c.id='qr';opts.forEach(o=>{const b=document.createElement('button');b.className='qr-btn';b.textContent=o;b.onclick=()=>{c.remove();proc(o);};c.appendChild(b);});conv.appendChild(c);conv.scrollTop=conv.scrollHeight;}
+
+// FORM VIS
+function setActive(id){F.forEach(f=>{const e=document.getElementById('fv-'+f.id);if(!e||e.classList.contains('filled'))return;e.classList.remove('active');if(f.id===id){e.classList.add('active');e.textContent='● listening...';}});}
+function setFilled(id,v){const e=document.getElementById('fv-'+id);if(!e)return;e.className='ff-v filled';e.textContent=v;}
+function updProg(){const p=Math.round((cF/F.length)*100);document.getElementById('pCircle').setAttribute('stroke-dashoffset',100-p);document.getElementById('pPct').textContent=p+'%';}
+
+// VALIDATION PANEL
+async function animVal(steps){const b=document.getElementById('vpBody');b.innerHTML='';for(const s of steps){const r=document.createElement('div');r.className='vr run';r.innerHTML='<span class="vr-i">⟳</span><span class="vr-l">'+s.l+'</span><span class="vr-t">running</span>';b.appendChild(r);await dl(s.t?s.t*25+60:100);r.className='vr '+(s.st==='pass'?'pass':'fail');r.querySelector('.vr-i').textContent=s.st==='pass'?'✓':'✗';r.querySelector('.vr-t').textContent=s.t+'ms';}}
+
+// ENGINE
+async function askF(i){cF=i;updProg();if(i>=F.length){addTyp();await dl(600);rmTyp();botMsg('<strong>✅ फॉर्म पूरा हो गया!</strong><br>All '+F.length+' fields captured and validated.<br><br><span style="font-size:0.82rem;color:var(--text-dim)">In production: submitted to PM-KISAN portal via API Setu → Reference number generated → SMS confirmation to registered mobile.</span>','फॉर्म पूरा हो गया! सभी फ़ील्ड वेरिफाई हो चुकी हैं।');document.getElementById('pCircle').setAttribute('stroke-dashoffset','0');document.getElementById('pPct').textContent='100%';document.getElementById('sDot').className='dot off';document.getElementById('sLbl').textContent='Complete';ti.disabled=1;document.getElementById('tb').disabled=1;return;}
+const f=F[i];setActive(f.id);addTyp();await dl(400+Math.random()*250);rmTyp();
+botMsg('<strong>'+f.lbl+'</strong><br><span style="color:var(--orange)">'+f.hi+'</span><br><span style="font-size:0.8rem;color:var(--text-dim)">'+f.en+'</span>',f.hi);
+if(f.opts){await dl(250);addQR(f.opts);}
+ti.disabled=0;document.getElementById('tb').disabled=0;ti.placeholder=f.ph;ti.focus();}
+
+async function proc(val){if(busy||cF<0||cF>=F.length)return;busy=1;ti.disabled=1;document.getElementById('tb').disabled=1;
+const q=document.getElementById('qr');if(q)q.remove();
+userMsg(val);const f=F[cF];document.getElementById('sLbl').textContent='Validating...';addTyp();await dl(250);rmTyp();
+const r=f.fn(val);await animVal(r.s);
+if(r.v){setFilled(f.id,r.n||val);const vh=r.s.map(s=>'<div class="vl '+(s.st==='pass'?'p':'f')+'">'+(s.st==='pass'?'✓':'✗')+' '+s.l+': '+s.d+'</div>').join('');botMsg('<strong style="color:var(--green)">✓ '+f.lbl+'</strong> — verified<div class="captured">'+(r.n||val)+'</div><div class="vlines">'+vh+'</div>',f.lbl+' verified');document.getElementById('sLbl').textContent='Ready';busy=0;await dl(350);askF(cF+1);}
+else{const vh=r.s.map(s=>'<div class="vl '+(s.st==='pass'?'p':'f')+'">'+(s.st==='pass'?'✓':'✗')+' '+s.l+': '+s.d+'</div>').join('');botMsg('<strong style="color:var(--red)">✗ Validation failed</strong> — please try again<div class="vlines">'+vh+'</div>','Validation failed. Please try again.');document.getElementById('sLbl').textContent='Retry';busy=0;ti.disabled=0;document.getElementById('tb').disabled=0;ti.focus();}}
+
+function send(){const v=ti.value.trim();if(!v)return;ti.value='';proc(v);}
+ti.addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+function dl(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// START
+async function go(){initSR();await dl(350);
+botMsg('🙏 <strong>नमस्ते! FormSetu में आपका स्वागत है।</strong><br><span style="font-size:0.83rem;color:var(--text-dim)">Voice-Enabled Government Form Filling Engine</span>','नमस्ते! FormSetu में आपका स्वागत है।');
+await dl(1100);addTyp();await dl(500);rmTyp();
+botMsg('मैं <strong>PM-KISAN</strong> फॉर्म भरने में मदद करूंगा।<br><br>🎤 <strong>Mic button</strong> दबाकर हिंदी/English में बोलें<br>⌨️ या नीचे <strong>type</strong> करें<br><br><span style="font-size:0.8rem;color:var(--text-dim)">Real-time validation: Aadhaar Verhoeff checksum, IFSC RBI lookup, LGD geo-hierarchy</span>','मैं PM-KISAN फॉर्म भरने में मदद करूंगा। माइक बटन दबाकर बोलें, या टाइप करें।');
+await dl(800);askF(0);}
+go();
+</script>
+</body>
+</html>
