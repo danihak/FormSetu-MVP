@@ -293,16 +293,13 @@ if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const fi
 SR.onerror=()=>{fullText='';lastInterim='';stopM();};SR.onend=()=>{if(rec){try{SR.start();}catch(e){fullText='';lastInterim='';stopM();}}};
 window._micFullText=()=>{const t=fullText.trim();fullText='';return t;};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
 function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;
-// Cancel any TTS that might be playing (prevents hearing old prompts)
 if(window.speechSynthesis)window.speechSynthesis.cancel();
 document.getElementById('micBtn').classList.add('rec');
-document.getElementById('vsText').textContent='⏳ Mic warming up... 3';document.getElementById('vsText').style.color='var(--orange)';document.getElementById('vsSub').textContent='Wait for GO signal, then speak';
-try{SR.start();}catch(e){}
-// Visual countdown: Chrome needs ~1s to warm up audio capture
-setTimeout(()=>{if(!rec)return;document.getElementById('vsText').textContent='⏳ Mic warming up... 2';},400);
-setTimeout(()=>{if(!rec)return;document.getElementById('vsText').textContent='⏳ Mic warming up... 1';},800);
-setTimeout(()=>{if(!rec)return;
-document.getElementById('vsText').textContent='🟢 GO! Speak now...';document.getElementById('vsText').style.color='var(--green)';document.getElementById('vsSub').textContent='I will wait 5 seconds after you stop speaking.';animW();},1200);}
+document.getElementById('vsText').textContent='⏳ 3...';document.getElementById('vsText').style.color='var(--orange)';document.getElementById('vsSub').textContent='Wait for GO, then speak';
+setTimeout(()=>{if(!rec)return;document.getElementById('vsText').textContent='⏳ 2...';},400);
+setTimeout(()=>{if(!rec)return;document.getElementById('vsText').textContent='⏳ 1...';},800);
+setTimeout(()=>{if(!rec)return;try{SR.start();}catch(e){}
+document.getElementById('vsText').textContent='🟢 GO! Speak now...';document.getElementById('vsText').style.color='var(--green)';document.getElementById('vsSub').textContent='Speak after GO. I wait 5s after you stop.';animW();},1200);}
 function stopM(){rec=0;try{SR.stop();}catch(e){}document.getElementById('micBtn').classList.remove('rec');document.getElementById('vsText').textContent='Tap mic or type';document.getElementById('vsText').style.color='var(--text-dim)';document.getElementById('vsSub').textContent='Chrome recommended for Hindi speech';stopW();}
 let wI;function animW(){const b=wv.querySelectorAll('.wb');wI=setInterval(()=>b.forEach(x=>{x.style.height=(3+Math.random()*24)+'px';x.classList.add('a');}),90);}
 function stopW(){clearInterval(wI);wv.querySelectorAll('.wb').forEach(b=>{b.style.height='3px';b.classList.remove('a');});}
