@@ -279,7 +279,12 @@ document.getElementById('vsText').textContent='Heard: "'+(fullText+interim).trim
 if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const final=(fullText||lastInterim).trim();fullText='';lastInterim='';if(final){stopM();proc(final);}},5000);};
 SR.onerror=()=>{fullText='';lastInterim='';stopM();};SR.onend=()=>{if(rec){try{SR.start();}catch(e){fullText='';lastInterim='';stopM();}}};
 window._micFullText=()=>{const t=fullText.trim();fullText='';return t;};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
-function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;try{SR.start();}catch(e){}document.getElementById('micBtn').classList.add('rec');document.getElementById('vsText').textContent='🔴 Listening... speak everything at once';document.getElementById('vsText').style.color='var(--red)';document.getElementById('vsSub').textContent='I will wait 5 seconds after you stop speaking before processing.';animW();}
+function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;
+document.getElementById('micBtn').classList.add('rec');document.getElementById('vsText').textContent='⏳ Starting mic...';document.getElementById('vsText').style.color='var(--orange)';document.getElementById('vsSub').textContent='Wait for beep, then speak';
+try{SR.start();}catch(e){}
+// Warmup: Chrome drops first ~0.5s of audio. Wait 800ms, play beep, THEN tell user to speak
+setTimeout(()=>{if(!rec)return;try{const ac=new(window.AudioContext||window.webkitAudioContext)();const osc=ac.createOscillator();const g=ac.createGain();osc.connect(g);g.connect(ac.destination);osc.frequency.value=880;g.gain.value=0.15;osc.start();osc.stop(ac.currentTime+0.15);}catch(e){}
+document.getElementById('vsText').textContent='🔴 Listening... speak everything at once';document.getElementById('vsText').style.color='var(--red)';document.getElementById('vsSub').textContent='I will wait 5 seconds after you stop speaking.';animW();},800);}
 function stopM(){rec=0;try{SR.stop();}catch(e){}document.getElementById('micBtn').classList.remove('rec');document.getElementById('vsText').textContent='Tap mic or type';document.getElementById('vsText').style.color='var(--text-dim)';document.getElementById('vsSub').textContent='Chrome recommended for Hindi speech';stopW();}
 let wI;function animW(){const b=wv.querySelectorAll('.wb');wI=setInterval(()=>b.forEach(x=>{x.style.height=(3+Math.random()*24)+'px';x.classList.add('a');}),90);}
 function stopW(){clearInterval(wI);wv.querySelectorAll('.wb').forEach(b=>{b.style.height='3px';b.classList.remove('a');});}
