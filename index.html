@@ -284,14 +284,14 @@ document.getElementById('sid').textContent=Math.random().toString(36).substring(
 const wv=document.getElementById('wv');for(let i=0;i<35;i++){const b=document.createElement('div');b.className='wb';b.style.height='3px';wv.appendChild(b);}
 
 // SPEECH
-function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=true;SR.interimResults=true;SR.lang=uLang;
-let fullText='';let lastInterim='';let silenceTimer=null;
-SR.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){fullText+=e.results[i][0].transcript+' ';}else{interim+=e.results[i][0].transcript;}}
-lastInterim=interim;
+function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=false;SR.interimResults=true;SR.lang=uLang;
+let fullText='';let silenceTimer=null;
+SR.onresult=e=>{let final='',interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
+if(final)fullText+=final+' ';
 document.getElementById('vsText').textContent='Heard: "'+(fullText+interim).trim()+'"';document.getElementById('vsText').style.color='var(--green)';
-if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const final=(fullText||lastInterim).trim();fullText='';lastInterim='';if(final){stopM();proc(final);}},5000);};
-SR.onerror=()=>{fullText='';lastInterim='';stopM();};SR.onend=()=>{if(rec){try{SR.start();}catch(e){fullText='';lastInterim='';stopM();}}};
-window._micFullText=()=>{const t=fullText.trim();fullText='';return t;};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
+if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const result=fullText.trim();fullText='';if(result){stopM();proc(result);}},5000);};
+SR.onerror=()=>{fullText='';stopM();};
+SR.onend=()=>{if(rec){if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const result=fullText.trim();fullText='';if(result){stopM();proc(result);}else{stopM();}},5000);try{SR.start();}catch(e){}}};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
 function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;
 if(window.speechSynthesis)window.speechSynthesis.cancel();
 try{SR.start();}catch(e){}
