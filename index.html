@@ -189,6 +189,8 @@ function normalizeDigits(input){
 let s=stripConversation(input);
 s=romanHindiNums(s);
 s=hindiToEng(s);
+// Chrome sometimes outputs O (letter) instead of 0 (zero)
+s=s.replace(/[Oo]/g,'0');
 s=s.replace(/[\s\-]/g,'');
 s=s.replace(/[^\d]/g,'');
 return s;
@@ -284,14 +286,12 @@ document.getElementById('sid').textContent=Math.random().toString(36).substring(
 const wv=document.getElementById('wv');for(let i=0;i<35;i++){const b=document.createElement('div');b.className='wb';b.style.height='3px';wv.appendChild(b);}
 
 // SPEECH
-function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=false;SR.interimResults=true;SR.lang=uLang;
-let fullText='';let silenceTimer=null;
+function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=true;SR.interimResults=true;SR.lang=uLang;
 SR.onresult=e=>{if(micWarm)return;let final='',interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript;else interim+=e.results[i][0].transcript;}
-if(final)fullText+=final+' ';
-document.getElementById('vsText').textContent='Heard: "'+(fullText+interim).trim()+'"';document.getElementById('vsText').style.color='var(--green)';
-if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const result=fullText.trim();fullText='';if(result){stopM();proc(result);}},5000);};
-SR.onerror=()=>{fullText='';stopM();};
-SR.onend=()=>{if(rec){if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const result=fullText.trim();fullText='';if(result){stopM();proc(result);}else{stopM();}},5000);try{SR.start();}catch(e){}}};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
+document.getElementById('vsText').textContent='Heard: "'+(final||interim).trim()+'"';document.getElementById('vsText').style.color='var(--green)';
+if(final){stopM();proc(final.trim());}};
+SR.onerror=()=>{stopM();};
+SR.onend=()=>{if(rec&&!micWarm){try{SR.start();}catch(e){stopM();}}};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
 function startM(){if(!SR){initSR();if(!SR)return;}
 // Recreate SR if language changed (Chrome doesn't always honor lang change on existing instance)
 if(SR.lang!==uLang){SR=null;initSR();if(!SR)return;}
