@@ -4,7 +4,7 @@
 **Author:** Danish  
 **Date:** February 2026  
 **Status:** Proposal for COSS Review  
-**Reviewers:** Karthik (Principal Technical Architect, COSS), Manmeet (COSS)
+**Reviewers:** EkStep Technical Team
 
 ---
 
@@ -825,4 +825,4 @@ Being explicit about boundaries, because overpromising kills credibility:
 
 ---
 
-*This document is a living RFC. Feedback from Karthik and Manmeet will shape v0.2.*
+*This document is a living RFC. Feedback from EkStep Technical Team will shape v0.2.*
