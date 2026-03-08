@@ -270,11 +270,12 @@ const wv=document.getElementById('wv');for(let i=0;i<35;i++){const b=document.cr
 
 // SPEECH
 function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=true;SR.interimResults=true;SR.lang=uLang;
-let fullText='';let silenceTimer=null;
+let fullText='';let lastInterim='';let silenceTimer=null;
 SR.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){fullText+=e.results[i][0].transcript+' ';}else{interim+=e.results[i][0].transcript;}}
+lastInterim=interim;
 document.getElementById('vsText').textContent='Heard: "'+(fullText+interim).trim()+'"';document.getElementById('vsText').style.color='var(--green)';
-if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const final=fullText.trim();if(final){fullText='';stopM();proc(final);}},5000);};
-SR.onerror=()=>{fullText='';stopM();};SR.onend=()=>{if(rec){try{SR.start();}catch(e){fullText='';stopM();}}};
+if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const final=(fullText||lastInterim).trim();fullText='';lastInterim='';if(final){stopM();proc(final);}},5000);};
+SR.onerror=()=>{fullText='';lastInterim='';stopM();};SR.onend=()=>{if(rec){try{SR.start();}catch(e){fullText='';lastInterim='';stopM();}}};
 window._micFullText=()=>{const t=fullText.trim();fullText='';return t;};}function toggleMic(){if(busy||cF<0||cF>=F.length)return;rec?stopM():startM();}
 function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;try{SR.start();}catch(e){}document.getElementById('micBtn').classList.add('rec');document.getElementById('vsText').textContent='🔴 Listening... speak everything at once';document.getElementById('vsText').style.color='var(--red)';document.getElementById('vsSub').textContent='I will wait 5 seconds after you stop speaking before processing.';animW();}
 function stopM(){rec=0;try{SR.stop();}catch(e){}document.getElementById('micBtn').classList.remove('rec');document.getElementById('vsText').textContent='Tap mic or type';document.getElementById('vsText').style.color='var(--text-dim)';document.getElementById('vsSub').textContent='Chrome recommended for Hindi speech';stopW();}
