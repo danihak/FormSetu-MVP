@@ -202,7 +202,23 @@ function vPIN(i){const p=normalizeDigits(i);const s=[];s.push({l:'Format',st:/^\
 
 // FIELDS
 const F=[
-{id:'name',lbl:'Full Name',hi:'आपका पूरा नाम बताइए, जैसा आधार कार्ड पर है।',en:'Tell me your full name as on Aadhaar card.',ph:'e.g. Ramesh Kumar',fn:v=>({v:v.trim().length>=2?1:0,s:[{l:'Name check',st:v.trim().length>=2?'pass':'fail',d:v.trim().length>=2?'Valid':'Too short',t:1}],n:v.trim()})},
+{id:'name',lbl:'Full Name',hi:'आपका पूरा नाम बताइए, जैसा आधार कार्ड पर है।',en:'Tell me your full name as on Aadhaar card.',ph:'e.g. Ramesh Kumar',fn:v=>{let n=v.trim();
+// Strip Hindi wrappers
+n=n.replace(/^(जी\s*)?मेरा\s*नाम\s*/i,'');
+n=n.replace(/^(जी\s*)?नाम\s*/i,'');
+n=n.replace(/\s*है\s*$/i,'');
+n=n.replace(/\s*हैं\s*$/i,'');
+n=n.replace(/\s*जी\s*$/i,'');
+n=n.replace(/\s*बोल\s*रहा\s*हूं?\s*$/i,'');
+// Strip English wrappers
+n=n.replace(/^(hi\s*|hello\s*|hey\s*)?my\s*name\s*is\s*/i,'');
+n=n.replace(/^(hi\s*|hello\s*|hey\s*)?i\s*am\s*/i,'');
+n=n.replace(/^(hi\s*|hello\s*|hey\s*)?this\s*is\s*/i,'');
+n=n.replace(/^name\s*is\s*/i,'');
+n=n.replace(/^(hi\s*|hello\s*|hey\s*)?i'm\s*/i,'');
+n=n.trim();
+return{v:n.length>=2?1:0,s:[{l:'Name extraction',st:n.length>=2?'pass':'fail',d:n.length>=2?'Extracted: '+n:'Name too short',t:1}],n};
+}},
 {id:'aadhaar',lbl:'Aadhaar Number',hi:'अपना 12 अंकों का आधार नंबर बताइए।',en:'Your 12-digit Aadhaar number.',ph:'e.g. 4991 1866 5246',fn:vAadhaar},
 {id:'mobile',lbl:'Mobile Number',hi:'अपना मोबाइल नंबर बताइए।',en:'Your mobile number.',ph:'e.g. 9876543210',fn:vMobile},
 {id:'pan',lbl:'PAN Number',hi:'अपना पैन नंबर बताइए।',en:'Your PAN number.',ph:'e.g. ABCDE1234F',fn:vPAN},
