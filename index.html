@@ -278,7 +278,7 @@ return{v:n.length>=2?1:0,s:[{l:'Name extraction',st:n.length>=2?'pass':'fail',d:
 {id:'pincode',lbl:'PIN Code',hi:'अपना पिन कोड बताइए।',en:'Your area PIN code.',ph:'e.g. 313001',fn:vPIN},
 ];
 
-let cF=-1,busy=0,rec=0,SR=null,uLang='hi-IN';
+let cF=-1,busy=0,rec=0,SR=null,uLang='hi-IN',micReady=0;
 const conv=document.getElementById('conv'),ti=document.getElementById('ti');
 document.getElementById('sid').textContent=Math.random().toString(36).substring(2,7).toUpperCase();
 const wv=document.getElementById('wv');for(let i=0;i<35;i++){const b=document.createElement('div');b.className='wb';b.style.height='3px';wv.appendChild(b);}
@@ -286,7 +286,7 @@ const wv=document.getElementById('wv');for(let i=0;i<35;i++){const b=document.cr
 // SPEECH
 function initSR(){const S=window.SpeechRecognition||window.webkitSpeechRecognition;if(!S){document.getElementById('vsSub').textContent='No speech support. Use text input.';return;}SR=new S();SR.continuous=true;SR.interimResults=true;SR.lang=uLang;
 let fullText='';let lastInterim='';let silenceTimer=null;
-SR.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){fullText+=e.results[i][0].transcript+' ';}else{interim+=e.results[i][0].transcript;}}
+SR.onresult=e=>{if(!micReady)return;let interim='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal){fullText+=e.results[i][0].transcript+' ';}else{interim+=e.results[i][0].transcript;}}
 lastInterim=interim;
 document.getElementById('vsText').textContent='Heard: "'+(fullText+interim).trim()+'"';document.getElementById('vsText').style.color='var(--green)';
 if(silenceTimer)clearTimeout(silenceTimer);silenceTimer=setTimeout(()=>{const final=(fullText||lastInterim).trim();fullText='';lastInterim='';if(final){stopM();proc(final);}},5000);};
@@ -295,12 +295,14 @@ window._micFullText=()=>{const t=fullText.trim();fullText='';return t;};}functio
 function startM(){if(!SR){initSR();if(!SR)return;}rec=1;SR.lang=uLang;
 if(window.speechSynthesis)window.speechSynthesis.cancel();
 document.getElementById('micBtn').classList.add('rec');
-document.getElementById('vsText').textContent='⏳ 3...';document.getElementById('vsText').style.color='var(--orange)';document.getElementById('vsSub').textContent='Wait for GO, then speak';
-setTimeout(()=>{if(!rec)return;document.getElementById('vsText').textContent='⏳ 2...';},400);
-setTimeout(()=>{if(!rec)return;document.getElementById('vsText').textContent='⏳ 1...';},800);
-setTimeout(()=>{if(!rec)return;try{SR.start();}catch(e){}
-document.getElementById('vsText').textContent='🟢 GO! Speak now...';document.getElementById('vsText').style.color='var(--green)';document.getElementById('vsSub').textContent='Speak after GO. I wait 5s after you stop.';animW();},1200);}
-function stopM(){rec=0;try{SR.stop();}catch(e){}document.getElementById('micBtn').classList.remove('rec');document.getElementById('vsText').textContent='Tap mic or type';document.getElementById('vsText').style.color='var(--text-dim)';document.getElementById('vsSub').textContent='Chrome recommended for Hindi speech';stopW();}
+// Step 1: Start SR immediately so Chrome's audio pipeline warms up
+try{SR.start();}catch(e){}
+// Step 2: Show "wait" while Chrome warms up (user should NOT speak yet)
+document.getElementById('vsText').textContent='⏳ Wait...';document.getElementById('vsText').style.color='var(--orange)';document.getElementById('vsSub').textContent='DO NOT speak yet — wait for green GO';
+// Step 3: After 1.5s warmup, show GO — Chrome is now fully ready
+setTimeout(()=>{if(!rec)return;micReady=1;
+document.getElementById('vsText').textContent='🟢 GO! Speak now...';document.getElementById('vsText').style.color='var(--green)';document.getElementById('vsSub').textContent='Speak after GO. I wait 5s after you stop.';animW();},1500);}
+function stopM(){rec=0;micReady=0;try{SR.stop();}catch(e){}document.getElementById('micBtn').classList.remove('rec');document.getElementById('vsText').textContent='Tap mic or type';document.getElementById('vsText').style.color='var(--text-dim)';document.getElementById('vsSub').textContent='Chrome recommended for Hindi speech';stopW();}
 let wI;function animW(){const b=wv.querySelectorAll('.wb');wI=setInterval(()=>b.forEach(x=>{x.style.height=(3+Math.random()*24)+'px';x.classList.add('a');}),90);}
 function stopW(){clearInterval(wI);wv.querySelectorAll('.wb').forEach(b=>{b.style.height='3px';b.classList.remove('a');});}
 function toggleLang(){uLang=uLang==='hi-IN'?'en-IN':'hi-IN';document.getElementById('langLbl').textContent=uLang==='hi-IN'?'Hindi':'English';}
