@@ -10,7 +10,7 @@
 
 ## 1. Problem Statement (Technical)
 
-India's voice DPI stack (BHASHINI + VoicERA) provides ASR, TTS, NMT, and conversational infrastructure. However, there is no **structured, machine-readable representation** of government forms that would allow these voice systems to:
+India's voice DPI stack (Open Source Voice Adapter) provides ASR, TTS, NMT, and conversational infrastructure. However, there is no **structured, machine-readable representation** of government forms that would allow these voice systems to:
 
 1. Know what fields a form requires
 2. Generate a conversational flow to collect those fields
@@ -19,7 +19,7 @@ India's voice DPI stack (BHASHINI + VoicERA) provides ASR, TTS, NMT, and convers
 
 **Current state:** Every department that wants voice-enabled form filling must build the entire logic from scratch. Pehchan (Rajasthan) did it for birth/death certificates. GHMC (Hyderabad) is doing it for grievances. Each is a silo.
 
-**Proposed:** An open-source building block — a form schema standard + conversation engine + validator library — that any department can plug into VoicERA/BHASHINI to voice-enable their forms in days instead of months.
+**Proposed:** An open-source building block — a form schema standard + conversation engine + validator library — that any department can plug into Open Source Voice Adapter to voice-enable their forms in days instead of months.
 
 ---
 
@@ -29,8 +29,8 @@ India's voice DPI stack (BHASHINI + VoicERA) provides ASR, TTS, NMT, and convers
 ┌─────────────────────────────────────────────────────────┐
 │                    CHANNEL LAYER                         │
 │  ┌──────────┐ ┌──────────┐ ┌────────┐ ┌──────────────┐ │
-│  │ VoicERA/ │ │ WhatsApp │ │  IVR   │ │ Web Widget   │ │
-│  │ BHASHINI │ │ Business │ │ DTMF+  │ │ (Embed in    │ │
+│  │ / │ │ WhatsApp │ │  IVR   │ │ Web Widget   │ │
+│  │  │ │ Business │ │ DTMF+  │ │ (Embed in    │ │
 │  │ Voice    │ │ API      │ │ Voice  │ │ govt portal) │ │
 │  └────┬─────┘ └────┬─────┘ └───┬────┘ └──────┬───────┘ │
 └───────┼─────────────┼───────────┼─────────────┼─────────┘
@@ -334,7 +334,7 @@ The engine is a **finite state machine (FSM)**, NOT an LLM-driven chatbot. This 
 ### 4.3 Sequence Diagram: Single Field Collection via Voice
 
 ```
-Citizen          VoicERA/BHASHINI       FormSetu Engine       Validator         Schema Registry
+Citizen          Open Source Voice Adapter       FormSetu Engine       Validator         Schema Registry
   │                    │                      │                   │                    │
   │ speaks in Hindi    │                      │                   │                    │
   │───────────────────▶│                      │                   │                    │
@@ -511,16 +511,16 @@ class SpokenNumberNormalizer:
 
 ---
 
-## 6. Integration with BHASHINI/VoicERA
+## 6. Integration with /
 
-### 6.1 BHASHINI Pipeline Integration
+### 6.1  Pipeline Integration
 
-FormSetu uses BHASHINI's standard pipeline API, NOT a custom integration. This is important for COSS alignment — we use existing DPI, we don't rebuild it.
+FormSetu uses 's standard pipeline API, NOT a custom integration. This is important for COSS alignment — we use existing DPI, we don't rebuild it.
 
 ```python
 class BhashiniAdapter:
     """
-    Wraps BHASHINI Pipeline API for FormSetu's needs.
+    Wraps  Pipeline API for FormSetu's needs.
     Uses: ASR (speech→text), NMT (translate to engine language), TTS (text→speech)
     """
 
@@ -602,7 +602,7 @@ class BhashiniAdapter:
         ...
 
     async def _call_pipeline(self, payload: dict) -> dict:
-        """Make inference call to BHASHINI pipeline"""
+        """Make inference call to  pipeline"""
         resp = requests.post(
             self.callback_url,
             json=payload,
@@ -611,15 +611,15 @@ class BhashiniAdapter:
         return resp.json()
 ```
 
-### 6.2 VoicERA Integration (When SDK Available)
+### 6.2  Integration (When SDK Available)
 
-VoicERA is freshly launched (Feb 17, 2026). Its developer SDK is not yet publicly documented. FormSetu's channel adapter architecture means we can add a VoicERA-native adapter once their SDK stabilizes, without changing the core engine.
+ is freshly launched (Feb 17, 2026). Its developer SDK is not yet publicly documented. FormSetu's channel adapter architecture means we can add a -native adapter once their SDK stabilizes, without changing the core engine.
 
-**Current plan:** Use BHASHINI pipeline APIs directly (they work today). Migrate to VoicERA-specific integration when available.
+**Current plan:** Use  pipeline APIs directly (they work today). Migrate to -specific integration when available.
 
 ### 6.3 WebSocket Support for Real-Time Voice
 
-For low-latency voice interaction, FormSetu supports BHASHINI's streaming WebSocket API:
+For low-latency voice interaction, FormSetu supports 's streaming WebSocket API:
 
 ```python
 class BhashiniStreamingAdapter:
@@ -738,7 +738,7 @@ GET    /api/v1/lookup/lgd/villages?subdistrict_code=082101
 │  └────────────────────────────────┘              │
 │                                                   │
 │  External:                                        │
-│  ├── BHASHINI Pipeline API (ASR/NMT/TTS)         │
+│  ├──  Pipeline API (ASR/NMT/TTS)         │
 │  ├── API Setu (form submission)                   │
 │  └── DigiLocker API (document fetch)             │
 └───────────────────────────────────────────────────┘
@@ -748,7 +748,7 @@ GET    /api/v1/lookup/lgd/villages?subdistrict_code=082101
 - API server: 2 vCPU, 4GB RAM per replica (2 replicas)
 - Redis: 2GB (session data is ephemeral)
 - PostgreSQL: 10GB (schema registry + audit logs)
-- No GPU needed — all ML inference is on BHASHINI's side
+- No GPU needed — all ML inference is on 's side
 
 ---
 
@@ -761,7 +761,7 @@ GET    /api/v1/lookup/lgd/villages?subdistrict_code=082101
 | 1 | GovForm Schema spec v0.1 | JSON schema definition + 2 example schemas (PM-KISAN, Birth Certificate) |
 | 2 | Validator library v0.1 | `formsetu-validator` Python package: Aadhaar, PAN, IFSC, PIN, Mobile validators + tests |
 | 3 | Conversation engine v0.1 | FSM engine that reads schema → generates prompts → collects → validates. Text-only (no voice yet) |
-| 4 | BHASHINI adapter v0.1 | Voice integration: ASR input → engine → TTS output. End-to-end voice demo for PM-KISAN |
+| 4 |  adapter v0.1 | Voice integration: ASR input → engine → TTS output. End-to-end voice demo for PM-KISAN |
 
 ### Phase 2: Weeks 5-8 — Hardening
 
@@ -793,7 +793,7 @@ Being explicit about boundaries, because overpromising kills credibility:
 
 4. **Not another Pehchan/GHMC.** Those are apps for specific use cases. FormSetu is the building block they SHOULD have been built on.
 
-5. **Not competing with VoicERA.** FormSetu sits ON TOP of VoicERA. VoicERA is the voice pipe. FormSetu is the form brain.
+5. **Not competing with .** FormSetu sits ON TOP of .  is the voice pipe. FormSetu is the form brain.
 
 ---
 
@@ -805,7 +805,7 @@ Being explicit about boundaries, because overpromising kills credibility:
 
 3. **Offline/low-connectivity mode:** Rural India has patchy connectivity. Should FormSetu support a "collect offline, submit later" mode? This complicates the architecture significantly.
 
-4. **VoicERA SDK timeline:** We're building on BHASHINI pipeline APIs today. When VoicERA releases its developer SDK, what's the migration path? Need to coordinate with DIBD/EkStep.
+4. ** SDK timeline:** We're building on  pipeline APIs today. When  releases its developer SDK, what's the migration path? Need to coordinate with DIBD/EkStep.
 
 5. **Testing at scale:** How do we load-test voice form filling? Synthetic audio generation in multiple languages/dialects?
 
