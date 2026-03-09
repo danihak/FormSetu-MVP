@@ -2,7 +2,7 @@
 
 **The Form Intelligence Layer for India's Voice DPI**
 
-FormSetu is an open-source building block that converts any government form into a voice-enabled conversational experience. It sits between voice infrastructure (BHASHINI/VoicERA) and government backends, providing the missing "form intelligence" layer in India's DPI stack.
+FormSetu is an open-source building block that converts any government form into a voice-enabled conversational experience. It sits between voice infrastructure (Voice Adapter) and government backends, providing the missing "form intelligence" layer in India's DPI stack.
 
 > **One schema. Every channel. Every language.**
 
@@ -15,7 +15,7 @@ India has 740+ central sector schemes, each requiring citizens to fill forms. 5.
 1. **GovForm Schema** — A JSON standard for describing any government form (fields, validation, voice prompts, conditional logic, submission config)
 2. **Conversation Engine** — A deterministic FSM that walks through a schema, collecting fields via voice/text conversation
 3. **Validator Library** — Production-grade validators for Indian data formats (Aadhaar with Verhoeff checksum, PAN, IFSC, Mobile, PIN)
-4. **BHASHINI Adapter** — Integration with BHASHINI's ULCA Pipeline API for ASR, TTS, and translation in 22+ languages
+4. **Voice Adapter** — Integration with Open Source voice Adapter pipeline API for ASR, TTS, and translation in 22+ languages
 
 ## Architecture
 
@@ -126,7 +126,7 @@ PYTHONPATH=packages/validator/src pytest packages/validator/tests/ -v
 | API | FastAPI (Python) |
 | Session Storage | Redis |
 | Schema Registry | PostgreSQL |
-| Voice Integration | BHASHINI ULCA Pipeline API |
+| Voice Integration |Voice Adapter API |
 | Engine | Custom FSM (Python) |
 | CI/CD | GitHub Actions |
 | Deployment | Docker + Docker Compose |
