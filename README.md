@@ -53,7 +53,7 @@ cd FormSetu-MVP
 
 # Run with Docker
 cp .env.example .env
-# Edit .env with your BHASHINI credentials (get from https://bhashini.gov.in/ulca)
+# Edit .env with your credentials 
 docker compose up
 
 # API available at http://localhost:8000
