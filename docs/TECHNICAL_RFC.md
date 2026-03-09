@@ -518,7 +518,7 @@ class SpokenNumberNormalizer:
 FormSetu uses 's standard pipeline API, NOT a custom integration. This is important for COSS alignment — we use existing DPI, we don't rebuild it.
 
 ```python
-class BhashiniAdapter:
+class VoiceAdapter:
     """
     Wraps  Pipeline API for FormSetu's needs.
     Uses: ASR (speech→text), NMT (translate to engine language), TTS (text→speech)
@@ -622,12 +622,12 @@ class BhashiniAdapter:
 For low-latency voice interaction, FormSetu supports 's streaming WebSocket API:
 
 ```python
-class BhashiniStreamingAdapter:
+class VoiceStreamingAdapter:
     """
-    Uses bhashini.ai WebSocket API for streaming ASR.
+    Uses Voice.ai WebSocket API for streaming ASR.
     Enables real-time voice with interim results.
     """
-    WS_URL = "wss://api.bhashini.ai/v1/streaming/asr"
+    WS_URL = "wss://api.Voice.ai/v1/streaming/asr"
 
     async def stream_asr(self, websocket_client, source_lang: str):
         """
