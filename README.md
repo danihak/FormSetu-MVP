@@ -28,7 +28,7 @@ See [docs/TECHNICAL_RFC.md](docs/TECHNICAL_RFC.md) for full technical specificat
 | `@formsetu/schema-spec` | GovForm Schema specification + JSON Schema for validation | ✅ Complete |
 | `@formsetu/validator` | Indian data format validators (Aadhaar, PAN, IFSC, Mobile, PIN) — 5 validators, 19 test cases | ✅ Complete |
 | `@formsetu/engine` | Conversation flow engine (FSM-based, deterministic, auditable) | ✅ Complete |
-| `@formsetu/adapter-bhashini` | BHASHINI ULCA Pipeline API integration (ASR, TTS, NMT) | ✅ Complete |
+| `@formsetu/voice-adapter` | Open Source Voice Adapter Pipeline API integration (ASR, TTS, NMT) | ✅ Complete |
 | `@formsetu/lookup` | LGD, IFSC, PIN code lookup services | 🔴 Planned |
 
 ### Services
